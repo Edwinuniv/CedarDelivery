@@ -1,0 +1,26 @@
+@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Log out";
+}
+
+<div class="access-denied-container">
+    <div class="access-denied-card">
+        @if (User.Identity?.IsAuthenticated ?? false)
+        {
+            <h1 class="access-denied-title">Log out?</h1>
+            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post">
+                <button type="submit" class="btn-tp-primary">
+                    <i class="bi bi-box-arrow-left"></i> Log out
+                </button>
+            </form>
+        }
+        else
+        {
+            <h1 class="access-denied-title">You have logged out</h1>
+            <div class="access-denied-actions">
+                <a asp-area="Identity" asp-page="/Account/Login" class="btn-tp-primary">Log in again</a>
+            </div>
+        }
+    </div>
+</div>

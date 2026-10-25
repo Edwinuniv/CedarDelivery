@@ -10,7 +10,7 @@ namespace CedarDelivery.Data
         {
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            foreach (var role in new[] { Roles.Admin, Roles.Agent, Roles.User })
+            foreach (var role in Roles.All)
             {
                 if (!await roleManager.RoleExistsAsync(role))
                 {

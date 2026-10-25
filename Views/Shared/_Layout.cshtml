@@ -114,14 +114,15 @@
         })();
     </script>
 </head>
-<body class="@(User.IsInRole(Roles.Admin) ? "admin-theme" : User.IsInRole(Roles.Agent) ? "agent-theme" : "") @(ViewBag.PageClass ?? "page-dashboard")">
+<body class="@(User.IsInRole(Roles.Admin) ? "admin-theme" : User.IsInRole(Roles.Merchant) || User.IsInRole(Roles.Driver) ? "agent-theme" : "") @(ViewBag.PageClass ?? "page-dashboard")">
 
     @{
         var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
         var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
         bool isAuth = User.Identity?.IsAuthenticated == true;
         bool isAdmin = User.IsInRole(Roles.Admin);
-        bool isAgent = User.IsInRole(Roles.Agent);
+        bool isMerchant = User.IsInRole(Roles.Merchant);
+        bool isDriver = User.IsInRole(Roles.Driver);
         var userIdHash = isAuth ? User.Identity!.Name?.GetHashCode() ?? 0 : 0;
         var avatarColorNumber = (Math.Abs(userIdHash) % 8) + 1;
     }
@@ -180,9 +181,16 @@
                     </nav>
                 }
 
-                @if (isAgent || isAdmin)
+                @if (isMerchant || isAdmin)
                 {
-                    <div class="sidebar-section-label">AGENT</div>
+                    <div class="sidebar-section-label">MERCHANT</div>
+                    <nav class="sidebar-nav">
+                    </nav>
+                }
+
+                @if (isDriver || isAdmin)
+                {
+                    <div class="sidebar-section-label">DRIVER</div>
                     <nav class="sidebar-nav">
                     </nav>
                 }
@@ -208,13 +216,17 @@
                                 {
                                     <span>Administrator</span>
                                 }
-                                else if (isAgent)
+                                else if (isMerchant)
                                 {
-                                    <span>Agent</span>
+                                    <span>Merchant</span>
+                                }
+                                else if (isDriver)
+                                {
+                                    <span>Driver</span>
                                 }
                                 else
                                 {
-                                    <span>User</span>
+                                    <span>Customer</span>
                                 }
                             </div>
                         </div>

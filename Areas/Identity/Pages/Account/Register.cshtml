@@ -1,0 +1,102 @@
+@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Create Account";
+    ViewBag.PageClass = "page-dashboard";
+}
+
+<div class="register-container">
+    <div class="register-card">
+
+        <div class="register-header">
+            <img src="/images/cedardelivery-logo.png" alt="CedarDelivery" class="login-logo" />
+            <h1 class="register-title">
+                Cedar<span>Delivery</span>
+            </h1>
+            <p class="register-subtitle">
+                Create your account
+            </p>
+        </div>
+
+        <div class="register-form-container">
+
+            <partial name="_ExternalLoginButtons" model="(Model.ExternalLogins, Model.ReturnUrl)" />
+
+            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <div asp-validation-summary="ModelOnly" class="register-validation-summary"
+                     style="display:@(ViewData.ModelState.ErrorCount > 0 ? "block" : "none")">
+                </div>
+
+                <div class="register-form-fields">
+                    <div class="register-name-row">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input asp-for="Input.FirstName" class="form-control" placeholder="John" autocomplete="given-name" />
+                            <span asp-validation-for="Input.FirstName" class="text-danger validation-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input asp-for="Input.LastName" class="form-control" placeholder="Doe" autocomplete="family-name" />
+                            <span asp-validation-for="Input.LastName" class="text-danger validation-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input asp-for="Input.Email" class="form-control" autocomplete="username" placeholder="you@example.com" />
+                        <span asp-validation-for="Input.Email" class="text-danger validation-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <div class="register-password-wrapper">
+                            <input asp-for="Input.Password" class="form-control register-password-input" id="passwordInput" type="password" autocomplete="new-password" placeholder="Min. 6 characters, a digit, upper and lower case" />
+                            <button type="button" onclick="togglePassword('passwordInput', 'eyeIcon')" class="register-password-toggle">
+                                <i class="bi bi-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Input.Password" class="text-danger validation-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password</label>
+                        <div class="register-password-wrapper">
+                            <input asp-for="Input.ConfirmPassword" class="form-control register-password-input" id="confirmPasswordInput" type="password" autocomplete="new-password" placeholder="Repeat password" />
+                            <button type="button" onclick="togglePassword('confirmPasswordInput', 'confirmEyeIcon')" class="register-password-toggle">
+                                <i class="bi bi-eye" id="confirmEyeIcon"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger validation-error"></span>
+                    </div>
+
+                    <button type="submit" class="btn-tp-primary register-submit-btn">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+
+            <div class="register-footer">
+                <p class="register-footer-text">
+                    Already have an account?
+                    <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="register-login-link">
+                        Sign in
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Show or hide a password field.
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        }
+    </script>
+}

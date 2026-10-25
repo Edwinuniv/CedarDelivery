@@ -1,0 +1,44 @@
+@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Access Denied";
+    ViewBag.PageClass = "page-dashboard";
+}
+
+<div class="access-denied-container">
+    <div class="access-denied-card">
+        <div class="access-denied-icon">🚫</div>
+        <div class="access-denied-code">403</div>
+        <h1 class="access-denied-title">Access Denied</h1>
+        <p class="access-denied-message">You do not have permission to access this page.</p>
+
+        <div class="access-denied-reasons">
+            <div class="access-denied-reason">
+                <i class="bi bi-shield-exclamation"></i>
+                <span>You may need to <strong>log in</strong> with a different account</span>
+            </div>
+            <div class="access-denied-reason">
+                <i class="bi bi-person-badge"></i>
+                <span>Your role does not have the required <strong>permissions</strong></span>
+            </div>
+            <div class="access-denied-reason">
+                <i class="bi bi-shop"></i>
+                <span>Want to sell or deliver? <strong>Apply</strong> to become a Merchant or Driver</span>
+            </div>
+        </div>
+
+        <div class="access-denied-actions">
+            <a href="/" class="btn-tp-primary">
+                <i class="bi bi-house-fill"></i> Go to Home
+            </a>
+            <a href="javascript:history.back()" class="btn-tp-secondary">
+                <i class="bi bi-arrow-left"></i> Go Back
+            </a>
+        </div>
+
+        <div class="access-denied-footer">
+            <i class="bi bi-tree-fill"></i>
+            <span>CedarDelivery — Protecting your account</span>
+        </div>
+    </div>
+</div>

@@ -14,55 +14,72 @@ namespace CedarDelivery.Data
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
             var config = serviceProvider.GetRequiredService<IConfiguration>();
+            var logger = serviceProvider.GetRequiredService<ILogger<UserSeeder>>();
 
-            await CreateUserWithRole(userManager,
+            await CreateUserWithRole(userManager, logger,
                 "admin@cedardelivery.com",
                 config["Seed:AdminPassword"],
                 "Admin",
                 "User",
                 Roles.Admin);
 
-            await CreateUserWithRole(userManager,
-                "user@cedardelivery.com",
-                config["Seed:UserPassword"],
-                "Regular",
+            await CreateUserWithRole(userManager, logger,
+                "merchant@cedardelivery.com",
+                config["Seed:MerchantPassword"],
+                "Merchant",
                 "User",
-                Roles.User);
+                Roles.Merchant);
 
-            await CreateUserWithRole(userManager,
-                "agent@cedardelivery.com",
-                config["Seed:AgentPassword"],
-                "Agent",
+            await CreateUserWithRole(userManager, logger,
+                "driver@cedardelivery.com",
+                config["Seed:DriverPassword"],
+                "Driver",
                 "User",
-                Roles.Agent);
+                Roles.Driver);
+
+            await CreateUserWithRole(userManager, logger,
+                "customer@cedardelivery.com",
+                config["Seed:CustomerPassword"],
+                "Customer",
+                "User",
+                Roles.Customer);
         }
 
-        private static async Task CreateUserWithRole(UserManager<User> userManager, string email, string? password, string firstName, string lastName, string role)
+        private static async Task CreateUserWithRole(UserManager<User> userManager, ILogger logger, string email, string? password, string firstName, string lastName, string role)
         {
             if (string.IsNullOrEmpty(password))
+            {
+                logger.LogWarning("No seed password configured for {Email}; skipping.", email);
+                return;
+            }
+
+            if (await userManager.FindByEmailAsync(email) != null)
             {
                 return;
             }
 
-            if (await userManager.FindByEmailAsync(email) == null)
+            var user = new User
             {
-                var user = new User
-                {
-                    Email = email,
-                    UserName = email,
-                    EmailConfirmed = true,
-                    FirstName = firstName,
-                    LastName = lastName,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                };
+                Email = email,
+                UserName = email,
+                EmailConfirmed = true,
+                FirstName = firstName,
+                LastName = lastName,
+                IsActive = true,
+                CreatedAt = DateTime.Now
+            };
 
-                var result = await userManager.CreateAsync(user, password);
+            var result = await userManager.CreateAsync(user, password);
 
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(user, role);
-                }
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(user, role);
+            }
+            else
+            {
+                // Usually a password that breaks the rules in Program.cs (length, digit, upper/lower case).
+                logger.LogWarning("Could not seed {Email}: {Errors}", email,
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
             }
         }
     }
