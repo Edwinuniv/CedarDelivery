@@ -6,21 +6,27 @@ using CedarDelivery.ViewModels.Api;
 namespace CedarDelivery.Services.Implementations
 {
     // All notifications go through NotifyAsync: it saves the notification,
-    // then pushes it live to the user's open browser tabs (SignalR).
+    // pushes it live to the user's open browser tabs (SignalR),
+    // and for important events also sends an email (MailKit).
     public class NotificationService : INotificationService
     {
         private readonly INotificationRepository _notificationRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IRealtimeService _realtime;
+        private readonly IEmailService _email;
         private readonly ILogger<NotificationService> _logger;
 
-        public NotificationService(INotificationRepository notificationRepository, IRealtimeService realtime, ILogger<NotificationService> logger)
+        public NotificationService(INotificationRepository notificationRepository, IUserRepository userRepository,
+            IRealtimeService realtime, IEmailService email, ILogger<NotificationService> logger)
         {
             _notificationRepository = notificationRepository;
+            _userRepository = userRepository;
             _realtime = realtime;
+            _email = email;
             _logger = logger;
         }
 
-        public async Task NotifyAsync(string userId, string title, string message, NotificationType type, string? redirectUrl = null)
+        public async Task NotifyAsync(string userId, string title, string message, NotificationType type, string? redirectUrl = null, bool sendEmail = false)
         {
             try
             {
@@ -41,6 +47,32 @@ namespace CedarDelivery.Services.Implementations
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Could not save notification \"{Title}\" for user {UserId}.", title, userId);
+            }
+
+            if (sendEmail)
+            {
+                await SendEmailCopyAsync(userId, title, message, redirectUrl);
+            }
+        }
+
+        // Separate from the in-app part: a slow or failing mail server must not
+        // stop the notification above, and must not fail the user's action.
+        private async Task SendEmailCopyAsync(string userId, string title, string message, string? redirectUrl)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user?.Email == null)
+                {
+                    return;
+                }
+
+                await _email.SendNotificationAsync(user.Email, $"{user.FirstName} {user.LastName}".Trim(),
+                    title, message, redirectUrl, "View on CedarDelivery");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not email notification \"{Title}\" to user {UserId}.", title, userId);
             }
         }
 

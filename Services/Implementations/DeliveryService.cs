@@ -216,7 +216,8 @@ namespace CedarDelivery.Services.Implementations
                 $"Order {delivery.Order.OrderNumber}: delivered",
                 OrderStatusRules.CustomerMessage(OrderStatus.Delivered, delivery.Order.Store.Name) + " You can now rate the store and the driver.",
                 NotificationType.OrderStatusChanged,
-                OrderUrl(delivery.OrderId));
+                OrderUrl(delivery.OrderId),
+                sendEmail: true);
             await _notifications.NotifyAsync(delivery.Order.Store.OwnerId,
                 $"Order {delivery.Order.OrderNumber}: delivered",
                 "The order reached the customer.",

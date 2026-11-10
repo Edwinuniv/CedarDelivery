@@ -113,7 +113,14 @@ namespace CedarDelivery.Services.Implementations
                 $"New order {order.OrderNumber}",
                 $"{order.Items.Sum(i => i.Quantity)} item(s), total ${order.Total:0.00}.",
                 NotificationType.NewOrder,
-                OrderUrl(order.Id));
+                OrderUrl(order.Id),
+                sendEmail: true);
+            await _notifications.NotifyAsync(userId,
+                $"Order {order.OrderNumber} received",
+                $"{order.Items.Sum(i => i.Quantity)} item(s) from {store.Name}, total ${order.Total:0.00}, paid in cash on delivery. We'll let you know when the store accepts it.",
+                NotificationType.OrderStatusChanged,
+                OrderUrl(order.Id),
+                sendEmail: true);
             await _activityLog.LogAsync(userId, ActivityType.OrderPlaced, $"Placed order {order.OrderNumber} at \"{store.Name}\".");
 
             return await GetDetailsDtoAsync(order.Id);

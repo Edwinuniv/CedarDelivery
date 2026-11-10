@@ -166,14 +166,16 @@ namespace CedarDelivery.Services.Implementations
                 await _notifications.NotifyAsync(application.UserId,
                     $"You're now a {roleName}!",
                     $"Your {roleName} application was approved. Sign out and back in to open your {roleName} tools.",
-                    NotificationType.ApplicationApproved);
+                    NotificationType.ApplicationApproved,
+                    sendEmail: true);
             }
             else
             {
                 await _notifications.NotifyAsync(application.UserId,
                     $"{roleName} application not approved",
                     string.IsNullOrWhiteSpace(note) ? $"Your {roleName} application was not approved." : $"Your {roleName} application was not approved: {note}",
-                    NotificationType.ApplicationRejected);
+                    NotificationType.ApplicationRejected,
+                    sendEmail: true);
             }
 
             await _activityLog.LogAsync(adminId, ActivityType.ApplicationReviewed,

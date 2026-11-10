@@ -2,11 +2,15 @@
 #nullable disable
 
 using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.WebUtilities;
 using CedarDelivery.Constants;
 using CedarDelivery.Models;
 
@@ -19,12 +23,14 @@ namespace CedarDelivery.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
+        private readonly IEmailSender _emailSender;
         private readonly ILogger<RegisterModel> _logger;
 
-        public RegisterModel(UserManager<User> userManager, SignInManager<User> signInManager, ILogger<RegisterModel> logger)
+        public RegisterModel(UserManager<User> userManager, SignInManager<User> signInManager, IEmailSender emailSender, ILogger<RegisterModel> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailSender = emailSender;
             _logger = logger;
         }
 
@@ -97,7 +103,14 @@ namespace CedarDelivery.Areas.Identity.Pages.Account
                 await _userManager.AddToRoleAsync(user, Roles.Customer);
                 _logger.LogInformation("New customer account created for {Email}.", user.Email);
 
-                // Phase 6 adds email confirmation here. Until then, sign the user in directly.
+                // With email set up (Program.cs), the user must click a link before logging in.
+                if (_userManager.Options.SignIn.RequireConfirmedEmail)
+                {
+                    await SendConfirmationEmailAsync(user, returnUrl);
+                    return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl });
+                }
+
+                // Without email (development), sign the user in directly.
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 return LocalRedirect(returnUrl);
             }
@@ -108,6 +121,26 @@ namespace CedarDelivery.Areas.Identity.Pages.Account
             }
 
             return Page();
+        }
+
+        // Same link format as the scaffolded Identity page, so the built-in
+        // /Identity/Account/ConfirmEmail page can check the token.
+        private async Task SendConfirmationEmailAsync(User user, string returnUrl)
+        {
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+            var callbackUrl = Url.Page(
+                "/Account/ConfirmEmail",
+                pageHandler: null,
+                values: new { area = "Identity", userId = user.Id, code, returnUrl },
+                protocol: Request.Scheme);
+
+            await _emailSender.SendEmailAsync(user.Email, "Confirm your CedarDelivery account",
+                $"<h2 style='color:#0b6b4f;margin-top:0'>Welcome to CedarDelivery, {HtmlEncoder.Default.Encode(user.FirstName)}!</h2>" +
+                $"<p>Please confirm your email to start ordering.</p>" +
+                $"<p style='margin-top:24px'><a href='{HtmlEncoder.Default.Encode(callbackUrl)}' " +
+                $"style='background:#12a87a;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600'>Confirm my email</a></p>");
         }
     }
 }

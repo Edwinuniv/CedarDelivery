@@ -23,8 +23,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDefaultIdentity<User>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
-    // Turned on in Phase 6, once MailKit can send the confirmation emails.
-    options.SignIn.RequireConfirmedEmail = false;
+    // New users must confirm their email, but only once email sending is configured
+    // (otherwise nobody could ever confirm). See Services/Implementations/EmailService.cs.
+    options.SignIn.RequireConfirmedEmail = EmailService.IsEmailConfigured(builder.Configuration);
     options.User.RequireUniqueEmail = true;
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 6;
@@ -136,6 +137,9 @@ builder.Services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 // Services
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IRealtimeService, RealtimeService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+// Identity's pages (confirm email, forgot password) send their emails through this.
+builder.Services.AddScoped<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, IdentityEmailSender>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IStoreService, StoreService>();
 builder.Services.AddScoped<IProductService, ProductService>();

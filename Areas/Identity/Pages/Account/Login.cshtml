@@ -63,6 +63,11 @@
                 </div>
             </form>
 
+            <div class="login-register-section" style="margin-bottom:6px">
+                Didn't get the confirmation email?
+                <a asp-page="./ResendEmailConfirmation" class="login-register-link">Send it again</a>
+            </div>
+
             <div class="login-register-section">
                 Don't have an account?
                 <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="login-register-link">
