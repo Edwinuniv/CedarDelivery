@@ -1,6 +1,7 @@
 @model PagedResult<OrderSummaryDto>
 @{
     ViewData["Title"] = "My Orders";
+    ViewBag.RefreshOn = "OrderStatusChanged";
 }
 
 <div class="page-header">

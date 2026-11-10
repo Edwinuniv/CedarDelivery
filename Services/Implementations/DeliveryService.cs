@@ -11,6 +11,7 @@ namespace CedarDelivery.Services.Implementations
         private readonly IDeliveryRepository _deliveryRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly INotificationService _notifications;
+        private readonly IRealtimeService _realtime;
         private readonly IActivityLogService _activityLog;
 
         public DeliveryService(
@@ -18,12 +19,14 @@ namespace CedarDelivery.Services.Implementations
             IDeliveryRepository deliveryRepository,
             IOrderRepository orderRepository,
             INotificationService notifications,
+            IRealtimeService realtime,
             IActivityLogService activityLog)
         {
             _driverProfileRepository = driverProfileRepository;
             _deliveryRepository = deliveryRepository;
             _orderRepository = orderRepository;
             _notifications = notifications;
+            _realtime = realtime;
             _activityLog = activityLog;
         }
 
@@ -57,6 +60,14 @@ namespace CedarDelivery.Services.Implementations
             profile.LocationUpdatedAt = DateTime.Now;
 
             await _driverProfileRepository.SaveAsync();
+
+            // While carrying an order, the customer's order page shows the driver moving.
+            var active = await _deliveryRepository.GetActiveByDriverAsync(profile.Id);
+            if (active != null && active.Status == DeliveryStatus.PickedUp)
+            {
+                await _realtime.DriverLocationAsync(active.OrderId, latitude, longitude);
+            }
+
             return DriverProfileDto.FromEntity(profile);
         }
 
@@ -112,6 +123,9 @@ namespace CedarDelivery.Services.Implementations
                 throw new BadRequestException("Another driver already took this delivery.");
             }
 
+            // Status is still ReadyForPickup, but the order page now shows the driver.
+            await _realtime.OrderChangedAsync(order.Id, order.Status);
+
             await _notifications.NotifyAsync(order.CustomerId,
                 $"Order {order.OrderNumber}: driver assigned",
                 "A driver is heading to the store to pick up your order.",
@@ -138,6 +152,7 @@ namespace CedarDelivery.Services.Implementations
 
             // Deleting the row frees the order so another driver can accept it.
             await _deliveryRepository.DeleteAsync(delivery.Id);
+            await _realtime.OrderChangedAsync(delivery.OrderId, delivery.Order.Status);
             await _activityLog.LogAsync(userId, ActivityType.DeliveryReleased, $"Released delivery of order {delivery.Order.OrderNumber}.");
         }
 
@@ -164,6 +179,7 @@ namespace CedarDelivery.Services.Implementations
             delivery.Status = DeliveryStatus.PickedUp;
             delivery.PickedUpAt = DateTime.Now;
             await _deliveryRepository.SaveAsync();
+            await _realtime.OrderChangedAsync(delivery.OrderId, delivery.Order.Status);
 
             await _notifications.NotifyAsync(delivery.Order.CustomerId,
                 $"Order {delivery.Order.OrderNumber}: on the way",
@@ -194,6 +210,7 @@ namespace CedarDelivery.Services.Implementations
             }
 
             await _deliveryRepository.SaveAsync();
+            await _realtime.OrderChangedAsync(delivery.OrderId, delivery.Order.Status);
 
             await _notifications.NotifyAsync(delivery.Order.CustomerId,
                 $"Order {delivery.Order.OrderNumber}: delivered",

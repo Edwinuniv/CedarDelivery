@@ -114,7 +114,10 @@
         })();
     </script>
 </head>
-<body class="@(User.IsInRole(Roles.Admin) ? "admin-theme" : User.IsInRole(Roles.Merchant) || User.IsInRole(Roles.Driver) ? "agent-theme" : "") @(ViewBag.PageClass ?? "page-dashboard")">
+@* data-order-id: this page follows one order live (order page).
+   data-refresh-on: notification types that make this page reload (e.g. a merchant's order list). *@
+<body class="@(User.IsInRole(Roles.Admin) ? "admin-theme" : User.IsInRole(Roles.Merchant) || User.IsInRole(Roles.Driver) ? "agent-theme" : "") @(ViewBag.PageClass ?? "page-dashboard")"
+      data-order-id="@ViewBag.OrderId" data-refresh-on="@ViewBag.RefreshOn">
 
     @{
         var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
@@ -406,6 +409,7 @@
     </svg>
 
     <div id="pageLoadBar"></div>
+    <div id="inAppToast"></div>
     <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">
         <i class="bi bi-chevron-up"></i>
     </button>
@@ -487,7 +491,86 @@
             }
 
             refreshBadges();
-            setInterval(refreshBadges, 30000);
+            // Backup in case the live connection drops; SignalR below updates instantly.
+            setInterval(refreshBadges, 60000);
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+        <script>
+            // ---------- Live updates (SignalR, see Hubs/NotificationHub.cs) ----------
+            var body = document.body;
+            var followedOrderId = parseInt(body.dataset.orderId || '0', 10);
+            var refreshOn = (body.dataset.refreshOn || '').split(',').filter(Boolean);
+
+            var connection = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/notifications')
+                .withAutomaticReconnect()
+                .build();
+
+            // Small popup in the corner. textContent (not innerHTML) so text from
+            // users, like a review comment, can never inject HTML or scripts.
+            function showToast(notification) {
+                var container = document.getElementById('inAppToast');
+                var toast = document.createElement('div');
+                toast.className = 'toast-notif';
+
+                var icon = document.createElement('div');
+                icon.className = 'toast-icon';
+                icon.innerHTML = '<i class="bi bi-bell-fill" style="color:var(--teal)"></i>';
+
+                var text = document.createElement('div');
+                var title = document.createElement('div');
+                title.className = 'toast-title';
+                title.textContent = notification.title;
+                var message = document.createElement('div');
+                message.className = 'toast-msg';
+                message.textContent = notification.message;
+                text.appendChild(title);
+                text.appendChild(message);
+
+                toast.appendChild(icon);
+                toast.appendChild(text);
+                toast.addEventListener('click', function () {
+                    location.href = '/Notifications/Open/' + notification.id;
+                });
+
+                container.appendChild(toast);
+                setTimeout(function () {
+                    toast.classList.add('fade-out');
+                    setTimeout(function () { toast.remove(); }, 300);
+                }, 6000);
+            }
+
+            connection.on('notification', function (notification) {
+                showToast(notification);
+                refreshBadges();
+                // e.g. the merchant's order list reloads when a new order arrives.
+                if (refreshOn.indexOf(notification.type) !== -1) {
+                    setTimeout(function () { location.reload(); }, 1500);
+                }
+            });
+
+            // The order on this page changed (status, driver assigned...): show the new state.
+            connection.on('orderUpdated', function (update) {
+                if (update.orderId === followedOrderId) {
+                    location.reload();
+                }
+            });
+
+            // Pages with a map listen for this event (see Orders/Details).
+            connection.on('driverLocation', function (position) {
+                document.dispatchEvent(new CustomEvent('cd:driverLocation', { detail: position }));
+            });
+
+            function followOrder() {
+                if (followedOrderId) {
+                    connection.invoke('JoinOrder', followedOrderId).catch(function () { });
+                }
+            }
+
+            connection.start().then(followOrder).catch(function () { });
+            // Groups are forgotten when the connection drops, so join again after reconnecting.
+            connection.onreconnected(followOrder);
         </script>
     }
 

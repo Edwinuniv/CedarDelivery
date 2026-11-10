@@ -14,6 +14,7 @@ namespace CedarDelivery.Services.Implementations
         private readonly IStoreRepository _storeRepository;
         private readonly IDriverProfileRepository _driverProfileRepository;
         private readonly INotificationService _notifications;
+        private readonly IRealtimeService _realtime;
         private readonly IActivityLogService _activityLog;
 
         public OrderService(
@@ -23,6 +24,7 @@ namespace CedarDelivery.Services.Implementations
             IStoreRepository storeRepository,
             IDriverProfileRepository driverProfileRepository,
             INotificationService notifications,
+            IRealtimeService realtime,
             IActivityLogService activityLog)
         {
             _orderRepository = orderRepository;
@@ -31,6 +33,7 @@ namespace CedarDelivery.Services.Implementations
             _storeRepository = storeRepository;
             _driverProfileRepository = driverProfileRepository;
             _notifications = notifications;
+            _realtime = realtime;
             _activityLog = activityLog;
         }
 
@@ -152,6 +155,7 @@ namespace CedarDelivery.Services.Implementations
             }
 
             await _orderRepository.SaveAsync();
+            await _realtime.OrderChangedAsync(order.Id, order.Status);
 
             // Tell everyone involved except the person who cancelled.
             var message = $"Order {order.OrderNumber} was cancelled. {note}";
@@ -220,6 +224,7 @@ namespace CedarDelivery.Services.Implementations
 
             OrderStatusRules.ChangeStatus(order, status, userId, note?.Trim());
             await _orderRepository.SaveAsync();
+            await _realtime.OrderChangedAsync(order.Id, order.Status);
 
             await _notifications.NotifyAsync(order.CustomerId,
                 $"Order {order.OrderNumber}: {status}",

@@ -1,6 +1,7 @@
 @model DriverDashboardViewModel
 @{
     ViewData["Title"] = "Deliveries";
+    ViewBag.RefreshOn = "DeliveryAvailable,OrderStatusChanged";
     var profile = Model.Profile;
     var current = Model.Current;
 }

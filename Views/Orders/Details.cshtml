@@ -3,6 +3,7 @@
 @{
     var order = Model.Order;
     ViewData["Title"] = $"Order {order.OrderNumber}";
+    ViewBag.OrderId = order.Id; // follow this order live
 }
 
 <div class="page-header">

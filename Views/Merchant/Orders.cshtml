@@ -1,6 +1,7 @@
 @model StoreOrdersViewModel
 @{
     ViewData["Title"] = $"Orders · {Model.Store.Name}";
+    ViewBag.RefreshOn = "NewOrder,OrderStatusChanged";
     // Tabs: the statuses a merchant deals with, in flow order.
     var tabs = new OrderStatus?[] { null, OrderStatus.Pending, OrderStatus.Accepted, OrderStatus.Preparing, OrderStatus.ReadyForPickup, OrderStatus.PickedUp, OrderStatus.Delivered, OrderStatus.Cancelled };
 }

@@ -5,16 +5,18 @@ using CedarDelivery.ViewModels.Api;
 
 namespace CedarDelivery.Services.Implementations
 {
-    // All notifications go through NotifyAsync, so live push (SignalR, Phase 5)
-    // and email (Phase 6) can be added here in one place.
+    // All notifications go through NotifyAsync: it saves the notification,
+    // then pushes it live to the user's open browser tabs (SignalR).
     public class NotificationService : INotificationService
     {
         private readonly INotificationRepository _notificationRepository;
+        private readonly IRealtimeService _realtime;
         private readonly ILogger<NotificationService> _logger;
 
-        public NotificationService(INotificationRepository notificationRepository, ILogger<NotificationService> logger)
+        public NotificationService(INotificationRepository notificationRepository, IRealtimeService realtime, ILogger<NotificationService> logger)
         {
             _notificationRepository = notificationRepository;
+            _realtime = realtime;
             _logger = logger;
         }
 
@@ -22,7 +24,7 @@ namespace CedarDelivery.Services.Implementations
         {
             try
             {
-                await _notificationRepository.AddAsync(new Notification
+                var notification = new Notification
                 {
                     UserId = userId,
                     Title = title,
@@ -31,7 +33,10 @@ namespace CedarDelivery.Services.Implementations
                     RedirectUrl = redirectUrl,
                     IsRead = false,
                     CreatedAt = DateTime.Now
-                });
+                };
+
+                await _notificationRepository.AddAsync(notification);
+                await _realtime.SendNotificationAsync(userId, NotificationDto.FromEntity(notification));
             }
             catch (Exception ex)
             {

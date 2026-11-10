@@ -109,7 +109,11 @@ builder.Services.AddControllersWithViews(options =>
         };
     });
 builder.Services.AddRazorPages();
-builder.Services.AddSignalR();
+// SignalR: live notifications and order updates (Hubs/NotificationHub.cs).
+// Enums as text, same as the REST API, so the browser receives "NewOrder" instead of 1.
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+        options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddHttpContextAccessor();
 
 // Repositories
@@ -131,6 +135,7 @@ builder.Services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 
 // Services
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddScoped<IRealtimeService, RealtimeService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IStoreService, StoreService>();
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -185,6 +190,7 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapRazorPages();
+app.MapHub<CedarDelivery.Hubs.NotificationHub>("/hubs/notifications");
 
 app.MapControllerRoute(
     name: "default",
@@ -193,11 +199,11 @@ app.MapControllerRoute(
 
 app.Run();
 
-// Used by the cookie events above: /api requests get a JSON error with the status code;
-// normal pages keep the usual redirect to the login or access-denied page.
+// Used by the cookie events above: /api and SignalR (/hubs) requests get a JSON error with
+// the status code; normal pages keep the usual redirect to the login or access-denied page.
 static Task ApiAwareRedirect(RedirectContext<CookieAuthenticationOptions> context, int statusCode, string message)
 {
-    if (context.Request.Path.StartsWithSegments("/api"))
+    if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/hubs"))
     {
         context.Response.StatusCode = statusCode;
         return context.Response.WriteAsJsonAsync(new ApiError(message));
