@@ -1,0 +1,55 @@
+@model PagedResult<RoleApplicationDto>
+@{
+    ViewData["Title"] = "Applications";
+    ViewBag.PageClass = "page-admin";
+    var status = (ApplicationStatus?)ViewBag.Status;
+}
+
+<div class="page-header">
+    <div>
+        <h2>Merchant & driver applications</h2>
+        <p>@Model.TotalCount @(status.HasValue ? status.ToString()!.ToLower() : "") application(s)</p>
+    </div>
+    <div class="d-flex gap-2">
+        @foreach (var s in Enum.GetValues<ApplicationStatus>())
+        {
+            <a asp-action="Applications" asp-route-status="@s" class="@(status == s ? "btn-tp-primary" : "btn-tp-secondary")">@s</a>
+        }
+    </div>
+</div>
+
+@if (!Model.Items.Any())
+{
+    <div class="tp-card"><div class="empty-state"><i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:12px"></i><p>No applications here.</p></div></div>
+}
+
+@foreach (var application in Model.Items)
+{
+    <div class="tp-card mb-2">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+            <div>
+                <div style="font-weight:600">
+                    @application.UserName
+                    <span class="badge-tp info">@application.RequestedRole</span>
+                    <span class="badge-tp @Ui.BadgeClass(application.Status)">@application.Status</span>
+                </div>
+                <div class="text-muted" style="font-size:13px">@application.UserEmail · @application.CreatedAt.ToString("dd MMM yyyy HH:mm")</div>
+                <div class="mt-1">@application.Details</div>
+                @if (!string.IsNullOrEmpty(application.ReviewNote))
+                {
+                    <div class="text-muted" style="font-size:13px"><i class="bi bi-chat-left-text"></i> @application.ReviewNote</div>
+                }
+            </div>
+            @if (application.Status == ApplicationStatus.Pending)
+            {
+                <form asp-action="ReviewApplication" asp-route-id="@application.Id" method="post" class="d-flex flex-wrap gap-2 align-items-start">
+                    <input type="text" name="note" maxlength="500" class="form-control" style="max-width:240px" placeholder="Note to the applicant" />
+                    <button type="submit" name="approve" value="true" class="btn-tp-primary"><i class="bi bi-check-lg"></i> Approve</button>
+                    <button type="submit" name="approve" value="false" class="btn-tp-danger"><i class="bi bi-x-lg"></i> Reject</button>
+                </form>
+            }
+        </div>
+    </div>
+}
+
+<partial name="_Pager" model="(Model.Page, Model.TotalPages)" />

@@ -30,6 +30,10 @@ namespace CedarDelivery.Services
             OrderStatus.Accepted, OrderStatus.Rejected, OrderStatus.Preparing, OrderStatus.ReadyForPickup
         };
 
+        // Merchant buttons to show on an order page (e.g. Pending -> Accept / Reject).
+        public static OrderStatus[] NextMerchantStatuses(OrderStatus current) =>
+            AllowedNext[current].Where(s => MerchantStatuses.Contains(s)).ToArray();
+
         public static bool IsFinal(OrderStatus status) =>
             status is OrderStatus.Delivered or OrderStatus.Rejected or OrderStatus.Cancelled;
 

@@ -1,0 +1,14 @@
+@model PagedResult<ActivityLogDto>
+@{
+    ViewData["Title"] = "My Activity";
+}
+
+<div class="page-header">
+    <div>
+        <h2>My activity</h2>
+        <p>What you did on your account, newest first. Spot anything you don't recognise? Change your password.</p>
+    </div>
+</div>
+
+<partial name="_ActivityTable" model="(Model.Items, false)" />
+<partial name="_Pager" model="(Model.Page, Model.TotalPages)" />

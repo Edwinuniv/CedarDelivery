@@ -1,0 +1,57 @@
+@model PagedResult<StoreDto>
+@{
+    ViewData["Title"] = "Browse Stores";
+    var query = (StoreQuery)ViewBag.Query;
+}
+
+<div class="page-header">
+    <div>
+        <h2>Browse stores</h2>
+        <p>@Model.TotalCount store(s) @(query.Category.HasValue ? $"in {query.Category}" : "")</p>
+    </div>
+</div>
+
+<div class="tp-card mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label">Search</label>
+            <input type="text" name="search" value="@query.Search" class="form-control" placeholder="Store name" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Category</label>
+            <select name="category" class="form-select">
+                <option value="">All categories</option>
+                @foreach (var category in Enum.GetValues<StoreCategory>())
+                {
+                    <option value="@category" selected="@(query.Category == category)">@category</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn-tp-primary w-100"><i class="bi bi-search"></i> Find</button>
+        </div>
+    </form>
+</div>
+
+@if (!Model.Items.Any())
+{
+    <div class="tp-card">
+        <div class="empty-state">
+            <i class="bi bi-shop" style="font-size:40px;display:block;margin-bottom:12px"></i>
+            <p>No stores match your search.</p>
+            <a asp-action="Index" class="btn-tp-secondary mt-2">Show all stores</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var store in Model.Items)
+        {
+            <div class="col-md-6 col-lg-4">
+                <partial name="_StoreCard" model="store" />
+            </div>
+        }
+    </div>
+    <partial name="_Pager" model="(Model.Page, Model.TotalPages)" />
+}

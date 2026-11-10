@@ -1,0 +1,25 @@
+@model PagedResult<ActivityLogDto>
+@{
+    ViewData["Title"] = "Activity Log";
+    ViewBag.PageClass = "page-admin";
+    var query = (ActivityQuery)ViewBag.Query;
+}
+
+<div class="page-header">
+    <div>
+        <h2>Activity log</h2>
+        <p>@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies")</p>
+    </div>
+    <form method="get" class="d-flex gap-2">
+        <select name="action" class="form-select" onchange="this.form.submit()">
+            <option value="">All actions</option>
+            @foreach (var action in Enum.GetValues<ActivityType>())
+            {
+                <option value="@action" selected="@(query.Action == action)">@Ui.Words(action)</option>
+            }
+        </select>
+    </form>
+</div>
+
+<partial name="_ActivityTable" model="(Model.Items, true)" />
+<partial name="_Pager" model="(Model.Page, Model.TotalPages)" />

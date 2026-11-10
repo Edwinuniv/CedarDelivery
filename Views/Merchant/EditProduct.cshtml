@@ -1,0 +1,48 @@
+@model ProductFormViewModel
+@{
+    ViewData["Title"] = "Edit Product";
+}
+
+<div class="page-header">
+    <div>
+        <h2>Edit @Model.Product.Name</h2>
+    </div>
+    <a asp-action="Menu" asp-route-id="@Model.StoreId" class="btn-tp-secondary"><i class="bi bi-arrow-left"></i> Back to menu</a>
+</div>
+
+<div class="tp-card" style="max-width:640px">
+    <form asp-action="EditProduct" asp-route-id="@Model.StoreId" asp-route-productId="@Model.ProductId" method="post">
+        <div class="form-group mb-3">
+            <label class="form-label">Category</label>
+            <select asp-for="Product.ProductCategoryId" class="form-select"
+                    asp-items="@(new SelectList(Model.Categories, "Id", "Name"))"></select>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Name</label>
+            <input asp-for="Product.Name" class="form-control" />
+            <span asp-validation-for="Product.Name" class="text-danger validation-error"></span>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Price ($)</label>
+            <input asp-for="Product.Price" type="number" step="0.01" min="0.01" class="form-control" />
+            <span asp-validation-for="Product.Price" class="text-danger validation-error"></span>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Description</label>
+            <textarea asp-for="Product.Description" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Image URL</label>
+            <input asp-for="Product.ImageUrl" class="form-control" />
+        </div>
+        <div class="form-check mb-3">
+            <input asp-for="Product.IsAvailable" class="form-check-input" />
+            <label asp-for="Product.IsAvailable" class="form-check-label">Available (shown on the menu)</label>
+        </div>
+        <button type="submit" class="btn-tp-primary"><i class="bi bi-check-lg"></i> Save</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

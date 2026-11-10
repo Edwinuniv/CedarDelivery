@@ -29,3 +29,8 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+/* Bootstrap's .text-muted is a fixed grey that almost disappears in dark mode.
+   Use the theme's secondary text color, which has a light and a dark value. */
+.text-muted {
+  color: var(--text-2) !important;
+}

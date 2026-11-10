@@ -1,0 +1,72 @@
+@model PagedResult<UserDto>
+@{
+    ViewData["Title"] = "Users";
+    ViewBag.PageClass = "page-admin";
+    var query = (UserQuery)ViewBag.Query;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="page-header">
+    <div>
+        <h2>Users</h2>
+        <p>@Model.TotalCount user(s)</p>
+    </div>
+</div>
+
+<div class="tp-card mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label">Search</label>
+            <input type="text" name="search" value="@query.Search" class="form-control" placeholder="Name or email" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Role</label>
+            <select name="role" class="form-select">
+                <option value="">All roles</option>
+                @foreach (var role in Roles.All)
+                {
+                    <option value="@role" selected="@(query.Role == role)">@role</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn-tp-primary w-100"><i class="bi bi-search"></i> Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="tp-card" style="overflow-x:auto">
+    <table class="tp-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Roles</th><th>Joined</th><th>Last login</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var user in Model.Items)
+            {
+                <tr style="@(user.IsActive ? "" : "opacity:.6")">
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>@user.PhoneNumber</td>
+                    <td>
+                        @foreach (var role in user.Roles)
+                        {
+                            <span class="badge-tp @(role == Roles.Admin ? "danger" : role == Roles.Customer ? "default" : "info")">@role</span>
+                        }
+                    </td>
+                    <td class="text-muted">@user.CreatedAt.ToString("dd MMM yyyy")</td>
+                    <td class="text-muted">@(user.LastLoginAt?.ToString("dd MMM HH:mm") ?? "never")</td>
+                    <td><span class="badge-tp @(user.IsActive ? "success" : "danger")">@(user.IsActive ? "Active" : "Deactivated")</span></td>
+                    <td>
+                        <form asp-action="SetUserActive" asp-route-id="@user.Id" method="post">
+                            <input type="hidden" name="isActive" value="@(!user.IsActive)" />
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button type="submit" class="@(user.IsActive ? "btn-tp-danger" : "btn-tp-primary")"
+                                    onclick="return confirm('@(user.IsActive ? "Deactivate" : "Activate") this user?')">
+                                @(user.IsActive ? "Deactivate" : "Activate")
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<partial name="_Pager" model="(Model.Page, Model.TotalPages)" />

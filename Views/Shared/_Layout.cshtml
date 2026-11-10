@@ -132,7 +132,7 @@
         <nav class="public-nav">
             <div class="sidebar-brand public-nav-brand">
                 <div class="brand-icon">
-                    <img src="/images/cedardelivery-logo.png" alt="CedarDelivery" style="width:28px;height:28px;object-fit:contain" />
+                    <img src="/images/cedardelivery-icon.png" alt="CedarDelivery" style="width:28px;height:28px;object-fit:contain" />
                 </div>
                 <span class="brand-name">
                     Cedar<span class="brand-accent">Delivery</span>
@@ -147,6 +147,12 @@
             </div>
         </nav>
         <div class="public-content">
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert-tp error" style="max-width:960px;margin:16px auto 0">
+                    <i class="bi bi-exclamation-circle-fill"></i> @TempData["Error"]
+                </div>
+            }
             @RenderBody()
         </div>
     }
@@ -157,7 +163,7 @@
                 <div class="sidebar-brand">
                     <button onclick="toggleSidebar()" class="sidebar-brand-btn">
                         <div class="brand-icon">
-                            <img src="/images/cedardelivery-logo.png" alt="CedarDelivery" style="width:28px;height:28px;object-fit:contain" />
+                            <img src="/images/cedardelivery-icon.png" alt="CedarDelivery" style="width:28px;height:28px;object-fit:contain" />
                         </div>
                         <span class="brand-name brand-text">
                             Cedar<span class="brand-accent">Delivery</span>
@@ -165,35 +171,106 @@
                     </button>
                 </div>
 
-                @* Module links (orders, deliveries, ...) are added here in Phase 4. *@
-                <div class="sidebar-section-label">MAIN</div>
+                <div class="sidebar-section-label">ORDER</div>
                 <nav class="sidebar-nav">
-                    <a asp-controller="Home" asp-action="Index" class="nav-item @(ctrl == "Home" ? "active" : "")">
-                        <i class="bi bi-grid-1x2-fill"></i>
-                        <span class="brand-text">Home</span>
+                    <a asp-controller="Stores" asp-action="Index" class="nav-item @(ctrl == "Stores" ? "active" : "")">
+                        <i class="bi bi-shop"></i>
+                        <span class="brand-text">Browse Stores</span>
+                    </a>
+                    <a asp-controller="Cart" asp-action="Index" class="nav-item @(ctrl == "Cart" ? "active" : "")">
+                        <i class="bi bi-cart3"></i>
+                        <span class="brand-text">My Cart</span>
+                        <span class="nav-badge" id="cartSidebarBadge" style="display:none"></span>
+                    </a>
+                    <a asp-controller="Orders" asp-action="Index" class="nav-item @(ctrl == "Orders" ? "active" : "")">
+                        <i class="bi bi-receipt"></i>
+                        <span class="brand-text">My Orders</span>
+                    </a>
+                    <a asp-controller="Addresses" asp-action="Index" class="nav-item @(ctrl == "Addresses" ? "active" : "")">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <span class="brand-text">Addresses</span>
                     </a>
                 </nav>
-
-                @if (isAdmin)
-                {
-                    <div class="sidebar-section-label">ADMIN</div>
-                    <nav class="sidebar-nav">
-                    </nav>
-                }
 
                 @if (isMerchant || isAdmin)
                 {
                     <div class="sidebar-section-label">MERCHANT</div>
                     <nav class="sidebar-nav">
+                        <a asp-controller="Merchant" asp-action="Index" class="nav-item @(ctrl == "Merchant" ? "active" : "")">
+                            <i class="bi bi-shop-window"></i>
+                            <span class="brand-text">My Stores</span>
+                        </a>
                     </nav>
                 }
 
-                @if (isDriver || isAdmin)
+                @if (isDriver)
                 {
                     <div class="sidebar-section-label">DRIVER</div>
                     <nav class="sidebar-nav">
+                        <a asp-controller="Deliveries" asp-action="Index" class="nav-item @(ctrl == "Deliveries" && action == "Index" ? "active" : "")">
+                            <i class="bi bi-scooter"></i>
+                            <span class="brand-text">Deliveries</span>
+                        </a>
+                        <a asp-controller="Deliveries" asp-action="History" class="nav-item @(ctrl == "Deliveries" && action == "History" ? "active" : "")">
+                            <i class="bi bi-clock-history"></i>
+                            <span class="brand-text">Delivery History</span>
+                        </a>
                     </nav>
                 }
+
+                @if (isAdmin)
+                {
+                    <div class="sidebar-section-label">ADMIN</div>
+                    <nav class="sidebar-nav">
+                        <a asp-controller="Admin" asp-action="Index" class="nav-item @(ctrl == "Admin" && action == "Index" ? "active" : "")">
+                            <i class="bi bi-speedometer2"></i>
+                            <span class="brand-text">Dashboard</span>
+                        </a>
+                        <a asp-controller="Admin" asp-action="Stores" class="nav-item @(ctrl == "Admin" && action == "Stores" ? "active" : "")">
+                            <i class="bi bi-patch-check-fill"></i>
+                            <span class="brand-text">Store Approvals</span>
+                        </a>
+                        <a asp-controller="Admin" asp-action="Applications" class="nav-item @(ctrl == "Admin" && action == "Applications" ? "active" : "")">
+                            <i class="bi bi-person-check-fill"></i>
+                            <span class="brand-text">Applications</span>
+                        </a>
+                        <a asp-controller="Admin" asp-action="Users" class="nav-item @(ctrl == "Admin" && action == "Users" ? "active" : "")">
+                            <i class="bi bi-people-fill"></i>
+                            <span class="brand-text">Users</span>
+                        </a>
+                        <a asp-controller="Admin" asp-action="Orders" class="nav-item @(ctrl == "Admin" && action == "Orders" ? "active" : "")">
+                            <i class="bi bi-list-check"></i>
+                            <span class="brand-text">All Orders</span>
+                        </a>
+                        <a asp-controller="Admin" asp-action="Activity" class="nav-item @(ctrl == "Admin" && action == "Activity" ? "active" : "")">
+                            <i class="bi bi-shield-check"></i>
+                            <span class="brand-text">Activity Log</span>
+                        </a>
+                    </nav>
+                }
+
+                <div class="sidebar-section-label">PERSONAL</div>
+                <nav class="sidebar-nav">
+                    <a asp-controller="Notifications" asp-action="Index" class="nav-item @(ctrl == "Notifications" ? "active" : "")">
+                        <i class="bi bi-bell-fill"></i>
+                        <span class="brand-text">Notifications</span>
+                    </a>
+                    <a asp-controller="Account" asp-action="Profile" class="nav-item @(ctrl == "Account" && action == "Profile" ? "active" : "")">
+                        <i class="bi bi-person-fill"></i>
+                        <span class="brand-text">My Profile</span>
+                    </a>
+                    @if (!isAdmin && !(isMerchant && isDriver))
+                    {
+                        <a asp-controller="Account" asp-action="Apply" class="nav-item @(ctrl == "Account" && action == "Apply" ? "active" : "")">
+                            <i class="bi bi-briefcase-fill"></i>
+                            <span class="brand-text">Sell or Deliver</span>
+                        </a>
+                    }
+                    <a asp-controller="Account" asp-action="Activity" class="nav-item @(ctrl == "Account" && action == "Activity" ? "active" : "")">
+                        <i class="bi bi-shield-check"></i>
+                        <span class="brand-text">My Activity</span>
+                    </a>
+                </nav>
 
                 <div class="sidebar-bottom">
                     <div class="sidebar-user">
@@ -259,7 +336,17 @@
                             <i class="bi bi-moon"></i>
                         </button>
 
-                        <div class="user-avatar" title="@(ViewBag.FullName ?? "Profile")">
+                        <a asp-controller="Cart" asp-action="Index" class="topbar-btn" title="Cart">
+                            <i class="bi bi-cart3"></i>
+                            <span class="notification-dot" id="cartBadge" style="display:none">0</span>
+                        </a>
+
+                        <a asp-controller="Notifications" asp-action="Index" class="topbar-btn" title="Notifications">
+                            <i class="bi bi-bell-fill"></i>
+                            <span class="notification-dot" id="notifBadge" style="display:none">0</span>
+                        </a>
+
+                        <a asp-controller="Account" asp-action="Profile" class="user-avatar" title="@(ViewBag.FullName ?? "Profile")">
                             @if (!string.IsNullOrEmpty(ViewBag.ProfilePictureUrl as string))
                             {
                                 <img src="@ViewBag.ProfilePictureUrl" class="user-avatar-img" />
@@ -270,7 +357,7 @@
                                     @(ViewBag.UserInitials ?? "?")
                                 </div>
                             }
-                        </div>
+                        </a>
                     </div>
                 </header>
 
@@ -369,6 +456,40 @@
             btn.classList.toggle('visible', window.scrollY > 300);
         });
     </script>
+
+    @if (isAuth)
+    {
+        <script>
+            // Top-bar badges: unread notifications and items in the cart.
+            // Refreshed every 30 seconds (Phase 5 pushes updates live with SignalR).
+            function setBadge(id, count) {
+                var badge = document.getElementById(id);
+                if (!badge) return;
+                badge.textContent = count > 9 ? '9+' : count;
+                badge.style.display = count > 0 ? '' : 'none';
+            }
+
+            function refreshBadges() {
+                fetch('/api/notifications/unread-count')
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (data) { if (data) setBadge('notifBadge', data.unreadCount); })
+                    .catch(function () { });
+
+                fetch('/api/cart')
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (cart) {
+                        if (!cart) return;
+                        var count = cart.items.reduce(function (sum, item) { return sum + item.quantity; }, 0);
+                        setBadge('cartBadge', count);
+                        setBadge('cartSidebarBadge', count);
+                    })
+                    .catch(function () { });
+            }
+
+            refreshBadges();
+            setInterval(refreshBadges, 30000);
+        </script>
+    }
 
     @await RenderSectionAsync("Scripts", required: false)
 

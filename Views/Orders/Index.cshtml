@@ -1,0 +1,27 @@
+@model PagedResult<OrderSummaryDto>
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<div class="page-header">
+    <div>
+        <h2>My orders</h2>
+        <p>@Model.TotalCount order(s)</p>
+    </div>
+    <a asp-controller="Stores" asp-action="Index" class="btn-tp-primary"><i class="bi bi-shop"></i> Order something</a>
+</div>
+
+@if (!Model.Items.Any())
+{
+    <div class="tp-card">
+        <div class="empty-state">
+            <i class="bi bi-receipt" style="font-size:40px;display:block;margin-bottom:12px"></i>
+            <p>You haven't ordered anything yet.</p>
+        </div>
+    </div>
+}
+else
+{
+    <partial name="_OrderTable" model="Model.Items" />
+    <partial name="_Pager" model="(Model.Page, Model.TotalPages)" />
+}

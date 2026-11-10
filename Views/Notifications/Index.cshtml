@@ -1,0 +1,48 @@
+@model PagedResult<NotificationDto>
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="page-header">
+    <div>
+        <h2>Notifications</h2>
+        <p>@Model.TotalCount in total</p>
+    </div>
+    @if (Model.Items.Any(n => !n.IsRead))
+    {
+        <form asp-action="ReadAll" method="post">
+            <button type="submit" class="btn-tp-secondary"><i class="bi bi-check2-all"></i> Mark all as read</button>
+        </form>
+    }
+</div>
+
+@if (!Model.Items.Any())
+{
+    <div class="tp-card">
+        <div class="empty-state"><i class="bi bi-bell" style="font-size:40px;display:block;margin-bottom:12px"></i><p>No notifications yet.</p></div>
+    </div>
+}
+else
+{
+    <div class="tp-card" id="notificationList">
+        @foreach (var n in Model.Items)
+        {
+            <a asp-action="Open" asp-route-id="@n.Id" class="d-flex gap-3 py-2 text-decoration-none"
+               style="color:inherit;border-top:1px solid var(--border);@(n.IsRead ? "opacity:.6" : "")">
+                <i class="bi @(n.Type switch {
+                    NotificationType.NewOrder => "bi-bag-plus-fill",
+                    NotificationType.DeliveryAvailable => "bi-scooter",
+                    NotificationType.NewReview => "bi-star-fill",
+                    NotificationType.ApplicationApproved => "bi-patch-check-fill",
+                    NotificationType.ApplicationRejected => "bi-x-circle-fill",
+                    _ => "bi-bell-fill" })" style="font-size:20px;color:var(--teal)"></i>
+                <div class="flex-grow-1">
+                    <div style="font-weight:@(n.IsRead ? "500" : "700")">@n.Title</div>
+                    <div class="text-muted" style="font-size:14px">@n.Message</div>
+                </div>
+                <div class="text-muted" style="font-size:12px;white-space:nowrap">@n.CreatedAt.ToString("dd MMM HH:mm")</div>
+            </a>
+        }
+    </div>
+    <partial name="_Pager" model="(Model.Page, Model.TotalPages)" />
+}

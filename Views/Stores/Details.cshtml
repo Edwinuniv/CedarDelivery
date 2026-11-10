@@ -1,0 +1,136 @@
+@model StorePageViewModel
+@{
+    var store = Model.Menu.Store;
+    ViewData["Title"] = store.Name;
+    var isSignedIn = User.Identity?.IsAuthenticated == true;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="page-header">
+    <div>
+        <h2><i class="bi @Ui.CategoryIcon(store.Category)"></i> @store.Name</h2>
+        <p>@store.Address · @Ui.Rating(store.AverageRating, store.ReviewCount)</p>
+    </div>
+    <a asp-action="Index" class="btn-tp-secondary"><i class="bi bi-arrow-left"></i> All stores</a>
+</div>
+
+@if (!store.IsApproved)
+{
+    <div class="alert-tp error mb-3"><i class="bi bi-hourglass-split"></i> This store is waiting for admin approval. Only you and admins can see it.</div>
+}
+
+@if (User.IsInRole(Roles.Admin))
+{
+    <form asp-controller="Admin" asp-action="SetStoreApproval" asp-route-id="@store.Id" method="post" class="mb-3">
+        <input type="hidden" name="isApproved" value="@(!store.IsApproved)" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <button type="submit" class="@(store.IsApproved ? "btn-tp-danger" : "btn-tp-primary")"
+                onclick="return confirm('@(store.IsApproved ? "Suspend this store? It will stop taking orders." : "Approve this store?")')">
+            <i class="bi bi-shield-check"></i> Admin: @(store.IsApproved ? "Suspend store" : "Approve store")
+        </button>
+    </form>
+}
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        @if (!string.IsNullOrEmpty(store.Description))
+        {
+            <div class="tp-card mb-3"><p class="mb-0">@store.Description</p></div>
+        }
+
+        @if (!Model.Menu.Categories.Any())
+        {
+            <div class="tp-card">
+                <div class="empty-state"><i class="bi bi-journal-x" style="font-size:40px;display:block;margin-bottom:12px"></i><p>This store has no products yet.</p></div>
+            </div>
+        }
+
+        @foreach (var category in Model.Menu.Categories)
+        {
+            <div class="tp-card mb-3">
+                <div class="tp-card-header"><div class="tp-card-title">@category.Name</div></div>
+                @foreach (var product in category.Products)
+                {
+                    <div class="d-flex align-items-center gap-3 py-2" style="border-top:1px solid var(--border)">
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <img src="@product.ImageUrl" alt="" style="width:56px;height:56px;border-radius:10px;object-fit:cover" />
+                        }
+                        <div class="flex-grow-1" style="min-width:0">
+                            <div style="font-weight:600">@product.Name</div>
+                            @if (!string.IsNullOrEmpty(product.Description))
+                            {
+                                <div class="text-muted" style="font-size:13px">@product.Description</div>
+                            }
+                        </div>
+                        <div style="font-weight:700;white-space:nowrap">@Ui.Money(product.Price)</div>
+                        @if (isSignedIn)
+                        {
+                            <form asp-controller="Cart" asp-action="Add" method="post">
+                                <input type="hidden" name="productId" value="@product.Id" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button type="submit" class="btn-tp-primary" title="Add to cart"><i class="bi bi-plus-lg"></i></button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-area="Identity" asp-page="/Account/Login" asp-route-returnUrl="@returnUrl" class="btn-tp-secondary" title="Log in to order"><i class="bi bi-plus-lg"></i></a>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="tp-card mb-3">
+            <div class="tp-card-header"><div class="tp-card-title">Store info</div></div>
+            <p class="mb-1">
+                @if (store.IsAcceptingOrders)
+                {
+                    <span class="badge-tp success">Open now</span>
+                }
+                else
+                {
+                    <span class="badge-tp default">Closed now</span>
+                }
+            </p>
+            <p class="mb-1"><i class="bi bi-clock"></i> @Ui.Hours(store.OpensAt, store.ClosesAt)</p>
+            <p class="mb-1"><i class="bi bi-scooter"></i> Delivery fee @Ui.Money(store.DeliveryFee)</p>
+            @if (store.MinimumOrder > 0)
+            {
+                <p class="mb-1"><i class="bi bi-basket"></i> Minimum order @Ui.Money(store.MinimumOrder)</p>
+            }
+            @if (!string.IsNullOrEmpty(store.Phone))
+            {
+                <p class="mb-0"><i class="bi bi-telephone"></i> @store.Phone</p>
+            }
+        </div>
+
+        @if (Model.Reviews != null)
+        {
+            <div class="tp-card">
+                <div class="tp-card-header"><div class="tp-card-title">Reviews</div></div>
+                @if (Model.Reviews.ReviewCount == 0)
+                {
+                    <p class="text-muted mb-0">No reviews yet.</p>
+                }
+                else
+                {
+                    <p style="font-size:22px;font-weight:700" class="mb-2">@Model.Reviews.AverageRating?.ToString("0.0") ★ <span class="text-muted" style="font-size:14px;font-weight:400">(@Model.Reviews.ReviewCount)</span></p>
+                    @foreach (var review in Model.Reviews.Reviews.Items)
+                    {
+                        <div class="py-2" style="border-top:1px solid var(--border)">
+                            <div><span style="color:var(--cedar-gold)">@Ui.Stars(review.Rating)</span> <strong>@review.CustomerName</strong></div>
+                            @if (!string.IsNullOrEmpty(review.Comment))
+                            {
+                                <div class="text-muted" style="font-size:13px">@review.Comment</div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,35 @@
+@* One store tile, used on the home page and the store list. *@
+@model StoreDto
+
+<a asp-controller="Stores" asp-action="Details" asp-route-id="@Model.Id" class="tp-card d-block text-decoration-none h-100" style="color:inherit">
+    <div class="d-flex align-items-center gap-3 mb-2">
+        @if (!string.IsNullOrEmpty(Model.LogoUrl))
+        {
+            <img src="@Model.LogoUrl" alt="" style="width:48px;height:48px;border-radius:12px;object-fit:cover" />
+        }
+        else
+        {
+            <div class="stat-icon received" style="margin:0"><i class="bi @Ui.CategoryIcon(Model.Category)"></i></div>
+        }
+        <div style="min-width:0">
+            <div class="tp-card-title" style="margin:0">@Model.Name</div>
+            <div class="text-muted" style="font-size:13px">@Model.Category · @Ui.Rating(Model.AverageRating, Model.ReviewCount)</div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2" style="font-size:13px">
+        @if (Model.IsAcceptingOrders)
+        {
+            <span class="badge-tp success">Open</span>
+        }
+        else
+        {
+            <span class="badge-tp default">Closed</span>
+        }
+        <span class="badge-tp info"><i class="bi bi-scooter"></i> @Ui.Money(Model.DeliveryFee)</span>
+        @if (Model.MinimumOrder > 0)
+        {
+            <span class="badge-tp default">Min @Ui.Money(Model.MinimumOrder)</span>
+        }
+    </div>
+</a>

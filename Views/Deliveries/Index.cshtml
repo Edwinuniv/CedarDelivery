@@ -1,0 +1,161 @@
+@model DriverDashboardViewModel
+@{
+    ViewData["Title"] = "Deliveries";
+    var profile = Model.Profile;
+    var current = Model.Current;
+}
+
+<div class="page-header">
+    <div>
+        <h2>Deliveries</h2>
+        <p>@profile.VehicleType @(profile.PlateNumber != null ? $"· {profile.PlateNumber}" : "")</p>
+    </div>
+    @if (profile.IsApproved)
+    {
+        <form asp-action="SetOnline" method="post">
+            <input type="hidden" name="isOnline" value="@(!profile.IsOnline)" />
+            <button type="submit" class="@(profile.IsOnline ? "btn-tp-danger" : "btn-tp-primary")" style="font-size:16px">
+                <i class="bi @(profile.IsOnline ? "bi-pause-circle-fill" : "bi-play-circle-fill")"></i>
+                @(profile.IsOnline ? "Go offline" : "Go online")
+            </button>
+        </form>
+    }
+</div>
+
+@if (!profile.IsApproved)
+{
+    <div class="alert-tp error mb-3"><i class="bi bi-hourglass-split"></i> Your driver application is waiting for an admin.</div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="stat-card"><div class="stat-icon received"><i class="bi bi-cash-coin"></i></div>
+            <div class="stat-value">@Ui.Money(Model.Earnings.Today)</div><div class="stat-label">Today</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card"><div class="stat-icon gold"><i class="bi bi-calendar-week"></i></div>
+            <div class="stat-value">@Ui.Money(Model.Earnings.ThisWeek)</div><div class="stat-label">This week</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card"><div class="stat-icon sent"><i class="bi bi-box-seam"></i></div>
+            <div class="stat-value">@Model.Earnings.CompletedDeliveries</div><div class="stat-label">Deliveries</div></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card"><div class="stat-icon beneficiaries"><i class="bi bi-star-fill"></i></div>
+            <div class="stat-value">@(Model.Reviews?.AverageRating?.ToString("0.0") ?? "–")</div><div class="stat-label">Rating (@(Model.Reviews?.ReviewCount ?? 0))</div></div>
+    </div>
+</div>
+
+@if (current != null)
+{
+    <div class="tp-card mb-3" style="border:2px solid var(--teal)">
+        <div class="tp-card-header d-flex justify-content-between">
+            <div class="tp-card-title"><i class="bi bi-scooter"></i> Current job · <span style="font-family:monospace">@current.OrderNumber</span></div>
+            <span class="badge-tp @Ui.BadgeClass(current.Status)">@Ui.Words(current.Status)</span>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="text-muted" style="font-size:12px">1. PICK UP</div>
+                <div style="font-weight:600">@current.StoreName</div>
+                <div>@current.StoreAddress</div>
+                @if (current.StorePhone != null)
+                {
+                    <a href="tel:@current.StorePhone"><i class="bi bi-telephone"></i> @current.StorePhone</a>
+                }
+            </div>
+            <div class="col-md-6">
+                <div class="text-muted" style="font-size:12px">2. DELIVER TO</div>
+                <div style="font-weight:600">@current.CustomerName</div>
+                <div>@current.DeliveryAddress</div>
+                @if (current.CustomerPhone != null)
+                {
+                    <a href="tel:@current.CustomerPhone"><i class="bi bi-telephone"></i> @current.CustomerPhone</a>
+                }
+                @if (current.DeliveryLatitude.HasValue && current.DeliveryLongitude.HasValue)
+                {
+                    <div><a href="https://www.google.com/maps/dir/?api=1&destination=@current.DeliveryLatitude,@current.DeliveryLongitude" target="_blank"><i class="bi bi-map"></i> Directions</a></div>
+                }
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center mt-3">
+            <span class="badge-tp warning" style="font-size:14px">Collect @Ui.Money(current.AmountToCollect) cash</span>
+            <span class="badge-tp success" style="font-size:14px">You earn @Ui.Money(current.DriverEarning)</span>
+            <div class="flex-grow-1"></div>
+            @if (current.Status == DeliveryStatus.Assigned)
+            {
+                <form asp-action="Release" asp-route-id="@current.Id" method="post">
+                    <button type="submit" class="btn-tp-secondary" onclick="return confirm('Give this job back?')">Give back</button>
+                </form>
+                <form asp-action="PickUp" asp-route-id="@current.Id" method="post">
+                    <button type="submit" class="btn-tp-primary"><i class="bi bi-bag-check-fill"></i> Picked up</button>
+                </form>
+            }
+            else if (current.Status == DeliveryStatus.PickedUp)
+            {
+                <form asp-action="Deliver" asp-route-id="@current.Id" method="post">
+                    <button type="submit" class="btn-tp-primary" onclick="return confirm('Confirm the order was delivered and the cash collected?')"><i class="bi bi-check2-circle"></i> Delivered</button>
+                </form>
+            }
+        </div>
+    </div>
+}
+else if (profile.IsOnline)
+{
+    <div class="tp-card">
+        <div class="tp-card-header d-flex justify-content-between">
+            <div class="tp-card-title">Jobs waiting for a driver</div>
+            <a asp-action="Index" class="btn-tp-secondary"><i class="bi bi-arrow-clockwise"></i> Refresh</a>
+        </div>
+        @if (!Model.Available.Any())
+        {
+            <div class="empty-state"><i class="bi bi-cup-hot" style="font-size:40px;display:block;margin-bottom:12px"></i><p>No jobs right now. You'll get a notification when one is ready.</p></div>
+        }
+        @foreach (var job in Model.Available)
+        {
+            <div class="d-flex flex-wrap align-items-center gap-3 py-2" style="border-top:1px solid var(--border)">
+                <div class="flex-grow-1">
+                    <div><strong>@job.StoreName</strong> → @job.DeliveryAddress</div>
+                    <div class="text-muted" style="font-size:13px">
+                        @job.ItemCount item(s) · collect @Ui.Money(job.OrderTotal)
+                        @if (job.ReadySince.HasValue)
+                        {
+                            <span>· ready since @job.ReadySince.Value.ToString("HH:mm")</span>
+                        }
+                    </div>
+                </div>
+                <span class="badge-tp success" style="font-size:14px">+@Ui.Money(job.Earning)</span>
+                <form asp-action="Accept" method="post">
+                    <input type="hidden" name="orderId" value="@job.OrderId" />
+                    <button type="submit" class="btn-tp-primary"><i class="bi bi-hand-thumbs-up-fill"></i> Accept</button>
+                </form>
+            </div>
+        }
+    </div>
+}
+else if (profile.IsApproved)
+{
+    <div class="tp-card">
+        <div class="empty-state"><i class="bi bi-moon-stars" style="font-size:40px;display:block;margin-bottom:12px"></i><p>You're offline. Go online to see jobs.</p></div>
+    </div>
+}
+
+@section Scripts {
+    @if (profile.IsOnline)
+    {
+        <script>
+            // While online, share the position every minute (used for the live map later).
+            function sendLocation() {
+                if (!navigator.geolocation) return;
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    fetch('/api/driver/location', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ latitude: +pos.coords.latitude.toFixed(6), longitude: +pos.coords.longitude.toFixed(6) })
+                    }).catch(function () { });
+                });
+            }
+            sendLocation();
+            setInterval(sendLocation, 60000);
+        </script>
+    }
+}

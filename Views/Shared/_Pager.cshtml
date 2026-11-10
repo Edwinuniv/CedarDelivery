@@ -1,0 +1,29 @@
+@* Previous / next links for any paged list. Model = (current page, total pages).
+   Keeps the other query-string values (search, filters) and only changes "page". *@
+@model (int Page, int TotalPages)
+
+@{
+    string LinkTo(int page)
+    {
+        var query = Context.Request.Query
+            .Where(q => !string.Equals(q.Key, "page", StringComparison.OrdinalIgnoreCase))
+            .Select(q => $"{Uri.EscapeDataString(q.Key)}={Uri.EscapeDataString(q.Value.ToString())}")
+            .Append($"page={page}");
+        return $"{Context.Request.Path}?{string.Join("&", query)}";
+    }
+}
+
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-center align-items-center gap-2 mt-3">
+        @if (Model.Page > 1)
+        {
+            <a href="@LinkTo(Model.Page - 1)" class="btn-tp-secondary"><i class="bi bi-chevron-left"></i> Previous</a>
+        }
+        <span class="text-muted">Page @Model.Page of @Model.TotalPages</span>
+        @if (Model.Page < Model.TotalPages)
+        {
+            <a href="@LinkTo(Model.Page + 1)" class="btn-tp-secondary">Next <i class="bi bi-chevron-right"></i></a>
+        }
+    </div>
+}

@@ -1,0 +1,124 @@
+@model MenuManageViewModel
+@{
+    ViewData["Title"] = $"Menu · {Model.Store.Name}";
+    var storeId = Model.Store.Id;
+}
+
+<div class="page-header">
+    <div>
+        <h2>@Model.Store.Name — menu</h2>
+        <p>@Model.Products.Count product(s) in @Model.Categories.Count categor@(Model.Categories.Count == 1 ? "y" : "ies")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Stores" asp-action="Details" asp-route-id="@storeId" class="btn-tp-secondary"><i class="bi bi-eye"></i> Customer view</a>
+        <a asp-action="Index" class="btn-tp-secondary"><i class="bi bi-arrow-left"></i> My stores</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        @if (!Model.Categories.Any())
+        {
+            <div class="tp-card">
+                <div class="empty-state"><i class="bi bi-journal-plus" style="font-size:40px;display:block;margin-bottom:12px"></i><p>Start by adding a category, e.g. "Burgers" or "Drinks".</p></div>
+            </div>
+        }
+
+        @foreach (var category in Model.Categories)
+        {
+            var products = Model.Products.Where(p => p.ProductCategoryId == category.Id).ToList();
+            <div class="tp-card mb-3">
+                <div class="tp-card-header d-flex justify-content-between align-items-center">
+                    <div class="tp-card-title">@category.Name</div>
+                    @if (!products.Any())
+                    {
+                        <form asp-action="DeleteCategory" asp-route-id="@storeId" method="post">
+                            <input type="hidden" name="categoryId" value="@category.Id" />
+                            <button type="submit" class="btn-tp-danger" title="Delete empty category"><i class="bi bi-trash"></i></button>
+                        </form>
+                    }
+                </div>
+                @if (!products.Any())
+                {
+                    <p class="text-muted mb-0">No products in this category.</p>
+                }
+                @foreach (var product in products)
+                {
+                    <div class="d-flex align-items-center gap-2 py-2" style="border-top:1px solid var(--border);@(product.IsAvailable ? "" : "opacity:.55")">
+                        <div class="flex-grow-1">
+                            <div style="font-weight:600">@product.Name @(product.IsAvailable ? "" : "(hidden)")</div>
+                            <div class="text-muted" style="font-size:13px">@product.Description</div>
+                        </div>
+                        <div style="font-weight:700">@Ui.Money(product.Price)</div>
+                        <form asp-action="SetAvailability" asp-route-id="@storeId" method="post">
+                            <input type="hidden" name="productId" value="@product.Id" />
+                            <input type="hidden" name="isAvailable" value="@(!product.IsAvailable)" />
+                            <button type="submit" class="btn-tp-secondary" title="@(product.IsAvailable ? "Hide (out of stock)" : "Show again")">
+                                <i class="bi @(product.IsAvailable ? "bi-eye-slash" : "bi-eye")"></i>
+                            </button>
+                        </form>
+                        <a asp-action="EditProduct" asp-route-id="@storeId" asp-route-productId="@product.Id" class="btn-tp-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                        <form asp-action="DeleteProduct" asp-route-id="@storeId" method="post">
+                            <input type="hidden" name="productId" value="@product.Id" />
+                            <button type="submit" class="btn-tp-danger" title="Delete" onclick="return confirm('Delete this product?')"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="tp-card mb-3">
+            <div class="tp-card-header"><div class="tp-card-title">Add a category</div></div>
+            <form asp-action="AddCategory" asp-route-id="@storeId" method="post">
+                <div class="form-group mb-2">
+                    <input asp-for="NewCategory.Name" class="form-control" placeholder="e.g. Burgers" />
+                    <span asp-validation-for="NewCategory.Name" class="text-danger validation-error"></span>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="form-label">Position on the menu</label>
+                    <input asp-for="NewCategory.DisplayOrder" type="number" min="0" class="form-control" />
+                </div>
+                <button type="submit" class="btn-tp-primary w-100"><i class="bi bi-plus-lg"></i> Add category</button>
+            </form>
+        </div>
+
+        @if (Model.Categories.Any())
+        {
+            <div class="tp-card">
+                <div class="tp-card-header"><div class="tp-card-title">Add a product</div></div>
+                <form asp-action="AddProduct" asp-route-id="@storeId" method="post">
+                    <div class="form-group mb-2">
+                        <label class="form-label">Category</label>
+                        <select asp-for="NewProduct.ProductCategoryId" class="form-select"
+                                asp-items="@(new SelectList(Model.Categories, "Id", "Name"))"></select>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="form-label">Name</label>
+                        <input asp-for="NewProduct.Name" class="form-control" />
+                        <span asp-validation-for="NewProduct.Name" class="text-danger validation-error"></span>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="form-label">Price ($)</label>
+                        <input asp-for="NewProduct.Price" type="number" step="0.01" min="0.01" class="form-control" />
+                        <span asp-validation-for="NewProduct.Price" class="text-danger validation-error"></span>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="form-label">Description</label>
+                        <textarea asp-for="NewProduct.Description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="form-label">Image URL (optional)</label>
+                        <input asp-for="NewProduct.ImageUrl" class="form-control" />
+                    </div>
+                    <button type="submit" class="btn-tp-primary w-100"><i class="bi bi-plus-lg"></i> Add product</button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,34 @@
+@model StoreOrdersViewModel
+@{
+    ViewData["Title"] = $"Orders · {Model.Store.Name}";
+    // Tabs: the statuses a merchant deals with, in flow order.
+    var tabs = new OrderStatus?[] { null, OrderStatus.Pending, OrderStatus.Accepted, OrderStatus.Preparing, OrderStatus.ReadyForPickup, OrderStatus.PickedUp, OrderStatus.Delivered, OrderStatus.Cancelled };
+}
+
+<div class="page-header">
+    <div>
+        <h2>@Model.Store.Name — orders</h2>
+        <p>@Model.Orders.TotalCount order(s) @(Model.Query.Status.HasValue ? $"· {Ui.Words(Model.Query.Status.Value).ToLower()}" : "")</p>
+    </div>
+    <a asp-action="Index" class="btn-tp-secondary"><i class="bi bi-arrow-left"></i> My stores</a>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    @foreach (var tab in tabs)
+    {
+        <a asp-action="Orders" asp-route-id="@Model.Store.Id" asp-route-status="@tab"
+           class="@(Model.Query.Status == tab ? "btn-tp-primary" : "btn-tp-secondary")">
+            @(tab.HasValue ? Ui.Words(tab.Value) : "All")
+        </a>
+    }
+</div>
+
+@if (!Model.Orders.Items.Any())
+{
+    <div class="tp-card"><div class="empty-state"><i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:12px"></i><p>No orders here.</p></div></div>
+}
+else
+{
+    <partial name="_OrderTable" model="Model.Orders.Items" />
+    <partial name="_Pager" model="(Model.Orders.Page, Model.Orders.TotalPages)" />
+}

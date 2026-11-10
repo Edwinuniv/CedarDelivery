@@ -11,11 +11,13 @@ namespace CedarDelivery.ApiControllers
     public class AccountApiController : BaseApiController
     {
         private readonly IAdminService _adminService;
+        private readonly IProfileService _profileService;
         private readonly IActivityLogService _activityLogService;
 
-        public AccountApiController(IAdminService adminService, IActivityLogService activityLogService)
+        public AccountApiController(IAdminService adminService, IProfileService profileService, IActivityLogService activityLogService)
         {
             _adminService = adminService;
+            _profileService = profileService;
             _activityLogService = activityLogService;
         }
 
@@ -23,6 +25,14 @@ namespace CedarDelivery.ApiControllers
         [HttpGet("me")]
         public async Task<ActionResult<UserDto>> GetMe()
         {
+            return Ok(await _adminService.GetUserAsync(RequiredUserId));
+        }
+
+        // PUT /api/account/me   { "firstName": "...", "lastName": "...", "phoneNumber": "..." }
+        [HttpPut("me")]
+        public async Task<ActionResult<UserDto>> UpdateMe(ProfileRequest request)
+        {
+            await _profileService.UpdateAsync(RequiredUserId, request);
             return Ok(await _adminService.GetUserAsync(RequiredUserId));
         }
 

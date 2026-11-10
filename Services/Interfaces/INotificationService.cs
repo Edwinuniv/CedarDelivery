@@ -11,7 +11,8 @@ namespace CedarDelivery.Services.Interfaces
 
         Task<PagedResult<NotificationDto>> GetMineAsync(string userId, PageQuery query);
         Task<int> GetUnreadCountAsync(string userId);
-        Task MarkReadAsync(int id, string userId);
+        // Returns the notification so the caller can open its RedirectUrl.
+        Task<NotificationDto> MarkReadAsync(int id, string userId);
         Task MarkAllReadAsync(string userId);
     }
 }

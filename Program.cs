@@ -85,7 +85,12 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("DriverOrAdmin", policy => policy.RequireRole(Roles.Driver, Roles.Admin));
 });
 
-builder.Services.AddControllersWithViews()
+builder.Services.AddControllersWithViews(options =>
+    {
+        // Every POST form must carry the hidden anti-forgery token (the <form> tag helper adds it),
+        // so another website can't submit forms on a signed-in user's behalf.
+        options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    })
     // Enums travel as text in JSON ("Restaurant" instead of 0), easier to read and to send.
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
@@ -136,6 +141,7 @@ builder.Services.AddScoped<IRoleApplicationService, RoleApplicationService>();
 builder.Services.AddScoped<IDeliveryService, DeliveryService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 // Swagger (API docs at /swagger in development)
 builder.Services.AddEndpointsApiExplorer();

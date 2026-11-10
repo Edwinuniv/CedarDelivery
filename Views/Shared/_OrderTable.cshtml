@@ -1,0 +1,24 @@
+@* Order list used by customers, merchants and admins. Each row opens the order page. *@
+@model List<OrderSummaryDto>
+
+<div class="tp-card" style="overflow-x:auto">
+    <table class="tp-table">
+        <thead>
+            <tr><th>Order</th><th>Store</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr style="cursor:pointer" onclick="location.href='@Url.Action("Details", "Orders", new { id = order.Id })'">
+                    <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id" style="font-family:monospace">@order.OrderNumber</a></td>
+                    <td>@order.StoreName</td>
+                    <td>@order.CustomerName</td>
+                    <td>@order.ItemCount</td>
+                    <td style="font-weight:600">@Ui.Money(order.Total)</td>
+                    <td><span class="badge-tp @Ui.BadgeClass(order.Status)">@Ui.Words(order.Status)</span></td>
+                    <td class="text-muted">@order.CreatedAt.ToString("dd MMM, HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

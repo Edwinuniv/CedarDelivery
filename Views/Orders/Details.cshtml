@@ -1,0 +1,147 @@
+@model OrderDetailsViewModel
+@using CedarDelivery.Services
+@{
+    var order = Model.Order;
+    ViewData["Title"] = $"Order {order.OrderNumber}";
+}
+
+<div class="page-header">
+    <div>
+        <h2 style="font-family:monospace">@order.OrderNumber</h2>
+        <p>@order.StoreName · @order.CreatedAt.ToString("dddd dd MMM yyyy, HH:mm")</p>
+    </div>
+    <span class="badge-tp @Ui.BadgeClass(order.Status)" id="orderStatusBadge" style="font-size:15px">@Ui.Words(order.Status)</span>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        @* Items and totals *@
+        <div class="tp-card mb-3">
+            <div class="tp-card-header"><div class="tp-card-title">Items</div></div>
+            <table class="tp-table">
+                <tbody>
+                    @foreach (var item in order.Items)
+                    {
+                        <tr>
+                            <td>@item.Quantity ×</td>
+                            <td>@item.ProductName</td>
+                            <td class="text-end">@Ui.Money(item.LineTotal)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between mt-2"><span>Subtotal</span><span>@Ui.Money(order.Subtotal)</span></div>
+            <div class="d-flex justify-content-between"><span>Delivery fee</span><span>@Ui.Money(order.DeliveryFee)</span></div>
+            <div class="d-flex justify-content-between mt-1" style="font-weight:700;font-size:17px"><span>Total</span><span>@Ui.Money(order.Total)</span></div>
+            <div class="text-muted mt-1" style="font-size:13px">
+                @Ui.Words(order.PaymentMethod) · <span class="badge-tp @(order.PaymentStatus == PaymentStatus.Paid ? "success" : "default")">@order.PaymentStatus</span>
+            </div>
+            @if (!string.IsNullOrEmpty(order.Notes))
+            {
+                <div class="mt-2"><i class="bi bi-chat-left-text"></i> <em>@order.Notes</em></div>
+            }
+        </div>
+
+        @* Merchant actions *@
+        @if (Model.NextStoreStatuses.Any())
+        {
+            <div class="tp-card mb-3">
+                <div class="tp-card-header"><div class="tp-card-title">Update the order</div></div>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var next in Model.NextStoreStatuses)
+                    {
+                        <form asp-action="UpdateStatus" asp-route-id="@order.Id" method="post">
+                            <input type="hidden" name="status" value="@next" />
+                            <button type="submit" class="@(next == OrderStatus.Rejected ? "btn-tp-danger" : "btn-tp-primary")"
+                                    onclick="@(next == OrderStatus.Rejected ? "return confirm('Reject this order?')" : null)">
+                                @Ui.Words(next)
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Customer reviews after delivery *@
+        @if (Model.CanReviewStore || Model.CanReviewDriver)
+        {
+            <div class="tp-card mb-3">
+                <div class="tp-card-header"><div class="tp-card-title">How was it?</div></div>
+                @foreach (var target in new[] { ReviewTarget.Store, ReviewTarget.Driver })
+                {
+                    if ((target == ReviewTarget.Store && !Model.CanReviewStore) || (target == ReviewTarget.Driver && !Model.CanReviewDriver))
+                    {
+                        continue;
+                    }
+                    <form asp-action="Review" asp-route-id="@order.Id" method="post" class="mb-3">
+                        <input type="hidden" name="targetType" value="@target" />
+                        <label class="form-label">Rate the @(target == ReviewTarget.Store ? order.StoreName : "driver")</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <select name="rating" class="form-select" style="max-width:140px">
+                                @for (var stars = 5; stars >= 1; stars--)
+                                {
+                                    <option value="@stars">@Ui.Stars(stars)</option>
+                                }
+                            </select>
+                            <input type="text" name="comment" maxlength="1000" class="form-control" placeholder="Comment (optional)" />
+                            <button type="submit" class="btn-tp-primary">Send</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        }
+
+        @if (Model.CanCancel)
+        {
+            <div class="tp-card mb-3">
+                <form asp-action="Cancel" asp-route-id="@order.Id" method="post" class="d-flex gap-2">
+                    <input type="text" name="reason" maxlength="500" class="form-control" placeholder="Reason (optional)" />
+                    <button type="submit" class="btn-tp-danger" onclick="return confirm('Cancel this order?')"><i class="bi bi-x-circle"></i> Cancel order</button>
+                </form>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-5">
+        @* Timeline *@
+        <div class="tp-card mb-3">
+            <div class="tp-card-header"><div class="tp-card-title">Timeline</div></div>
+            <div id="orderTimeline">
+                @foreach (var step in order.Timeline)
+                {
+                    <div class="d-flex gap-2 py-1">
+                        <span class="badge-tp @Ui.BadgeClass(step.Status)">@Ui.Words(step.Status)</span>
+                        <span class="text-muted" style="font-size:13px">@step.ChangedAt.ToString("HH:mm")</span>
+                        @if (!string.IsNullOrEmpty(step.Note))
+                        {
+                            <span style="font-size:13px">— @step.Note</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="tp-card mb-3">
+            <div class="tp-card-header"><div class="tp-card-title">Delivery</div></div>
+            <p class="mb-1"><i class="bi bi-geo-alt-fill"></i> @order.DeliveryAddress</p>
+            @if (!Model.IsCustomer)
+            {
+                <p class="mb-1"><i class="bi bi-person-fill"></i> @order.CustomerName @(order.CustomerPhone != null ? $"· {order.CustomerPhone}" : "")</p>
+            }
+            <p class="mb-1"><i class="bi bi-shop"></i> @order.StoreName — @order.StoreAddress @(order.StorePhone != null ? $"· {order.StorePhone}" : "")</p>
+            @if (order.Driver != null)
+            {
+                <p class="mb-0">
+                    <i class="bi bi-scooter"></i> @order.Driver.Name · @order.Driver.VehicleType
+                    @(order.Driver.PlateNumber != null ? $"({order.Driver.PlateNumber})" : "")
+                    @(order.Driver.Phone != null ? $"· {order.Driver.Phone}" : "")
+                </p>
+            }
+            else if (!OrderStatusRules.IsFinal(order.Status))
+            {
+                <p class="text-muted mb-0"><i class="bi bi-hourglass-split"></i> No driver yet.</p>
+            }
+        </div>
+    </div>
+</div>
+

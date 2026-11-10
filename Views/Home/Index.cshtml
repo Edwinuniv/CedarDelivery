@@ -1,8 +1,84 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model List<StoreDto>
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="home-container">
+    <div class="home-hero">
+        <img src="/images/cedardelivery-logo.png" alt="CedarDelivery" style="width:160px;height:160px;object-fit:contain" />
+        <h1 class="home-title">Local stores, <span class="home-title-accent">delivered fast</span></h1>
+        <p class="home-subtitle">Order from restaurants, groceries and pharmacies near you, and track your order live.</p>
+
+        <form asp-controller="Stores" asp-action="Index" method="get" class="d-flex gap-2 justify-content-center mt-3" style="max-width:520px;margin:0 auto">
+            <input type="text" name="search" class="form-control" placeholder="Search a store, e.g. burgers" />
+            <button type="submit" class="btn-tp-primary"><i class="bi bi-search"></i> Search</button>
+        </form>
+    </div>
+
+    <div class="row g-3 mb-4">
+        @foreach (var category in Enum.GetValues<StoreCategory>())
+        {
+            <div class="col-6 col-md-3">
+                <a asp-controller="Stores" asp-action="Index" asp-route-category="@category" class="home-feature-card d-block text-decoration-none">
+                    <div class="home-feature-icon"><i class="bi @Ui.CategoryIcon(category)"></i></div>
+                    <h3 class="home-feature-title">@category</h3>
+                </a>
+            </div>
+        }
+    </div>
+
+    @if (Model.Any())
+    {
+        <h3 class="mb-3">Stores on CedarDelivery</h3>
+        <div class="row g-3 mb-4">
+            @foreach (var store in Model)
+            {
+                <div class="col-md-4">
+                    <partial name="_StoreCard" model="store" />
+                </div>
+            }
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="home-feature-card">
+                <div class="home-feature-icon">🛒</div>
+                <h3 class="home-feature-title">1. Fill your cart</h3>
+                <p class="home-feature-text">Pick a store and add what you want from its menu.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="home-feature-card">
+                <div class="home-feature-icon">👨‍🍳</div>
+                <h3 class="home-feature-title">2. The store prepares it</h3>
+                <p class="home-feature-text">You see each step: accepted, preparing, ready for pickup.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="home-feature-card">
+                <div class="home-feature-icon">🛵</div>
+                <h3 class="home-feature-title">3. A driver brings it</h3>
+                <p class="home-feature-text">Pay cash at the door, then rate the store and the driver.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="home-cta">
+        <h3 class="home-cta-title">Own a store or want to deliver?</h3>
+        <p class="home-cta-text">Create an account, then apply as a merchant or a driver.</p>
+        <div class="home-cta-buttons">
+            <a asp-area="Identity" asp-page="/Account/Register" class="home-cta-btn-primary">Create an account</a>
+            <a asp-area="Identity" asp-page="/Account/Login" class="home-cta-btn-secondary">Log in</a>
+        </div>
+    </div>
+
+    <div class="home-footer">
+        <div class="home-footer-links">
+            <a asp-controller="Home" asp-action="Privacy" class="home-footer-link">Privacy</a>
+            <span class="home-footer-separator">·</span>
+            <a href="/swagger" class="home-footer-link">API</a>
+        </div>
+        <div class="home-footer-copyright">🌲 CedarDelivery · @DateTime.Now.Year</div>
+    </div>
 </div>

@@ -42,7 +42,10 @@ namespace CedarDelivery.ViewModels.Api
         public string StoreName { get; set; } = "";
         public string StoreAddress { get; set; } = "";
         public string? StorePhone { get; set; }
+        // Lets the page know if the viewer is the customer or the store owner.
+        public string StoreOwnerId { get; set; } = "";
 
+        public string CustomerId { get; set; } = "";
         public string CustomerName { get; set; } = "";
         public string? CustomerPhone { get; set; }
 
@@ -74,6 +77,8 @@ namespace CedarDelivery.ViewModels.Api
             StoreName = order.Store.Name,
             StoreAddress = order.Store.Address,
             StorePhone = order.Store.Phone,
+            StoreOwnerId = order.Store.OwnerId,
+            CustomerId = order.CustomerId,
             CustomerName = $"{order.Customer.FirstName} {order.Customer.LastName}",
             CustomerPhone = order.Customer.PhoneNumber,
             Items = order.Items.Select(OrderItemDto.FromEntity).ToList(),

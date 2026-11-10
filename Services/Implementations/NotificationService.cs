@@ -57,7 +57,7 @@ namespace CedarDelivery.Services.Implementations
             return await _notificationRepository.CountUnreadAsync(userId);
         }
 
-        public async Task MarkReadAsync(int id, string userId)
+        public async Task<NotificationDto> MarkReadAsync(int id, string userId)
         {
             var notification = await _notificationRepository.GetByIdAsync(id);
 
@@ -69,6 +69,7 @@ namespace CedarDelivery.Services.Implementations
 
             notification.IsRead = true;
             await _notificationRepository.SaveAsync();
+            return NotificationDto.FromEntity(notification);
         }
 
         public async Task MarkAllReadAsync(string userId)

@@ -1,0 +1,39 @@
+@* Activity log rows. ShowUser = true on the admin page (adds the user's email). *@
+@model (List<ActivityLogDto> Items, bool ShowUser)
+
+<div class="tp-card" style="overflow-x:auto">
+    @if (!Model.Items.Any())
+    {
+        <p class="text-muted mb-0">Nothing here yet.</p>
+    }
+    else
+    {
+        <table class="tp-table">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    @if (Model.ShowUser)
+                    {
+                        <th>User</th>
+                    }
+                    <th>Action</th><th>Details</th><th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model.Items)
+                {
+                    <tr>
+                        <td class="text-muted" style="white-space:nowrap">@log.CreatedAt.ToString("dd MMM HH:mm")</td>
+                        @if (Model.ShowUser)
+                        {
+                            <td>@log.UserEmail</td>
+                        }
+                        <td><span class="badge-tp default">@Ui.Words(log.Action)</span></td>
+                        <td>@log.Details</td>
+                        <td class="text-muted">@log.IpAddress</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

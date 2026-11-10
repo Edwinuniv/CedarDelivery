@@ -1,0 +1,96 @@
+@model StoreFormViewModel
+@{
+    var isNew = Model.StoreId == null;
+    ViewData["Title"] = isNew ? "New Store" : "Edit Store";
+}
+
+<div class="page-header">
+    <div>
+        <h2>@(isNew ? "Create a store" : $"Edit {Model.Store.Name}")</h2>
+        <p>@(isNew ? "An admin approves new stores before customers can see them." : "Changes are visible right away.")</p>
+    </div>
+    <a asp-action="Index" class="btn-tp-secondary"><i class="bi bi-arrow-left"></i> My stores</a>
+</div>
+
+<div class="tp-card" style="max-width:820px">
+    <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@Model.StoreId" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="row g-3">
+            <div class="col-md-8 form-group">
+                <label class="form-label">Store name</label>
+                <input asp-for="Store.Name" class="form-control" />
+                <span asp-validation-for="Store.Name" class="text-danger validation-error"></span>
+            </div>
+            <div class="col-md-4 form-group">
+                <label class="form-label">Category</label>
+                <select asp-for="Store.Category" class="form-select" asp-items="Html.GetEnumSelectList<StoreCategory>()">
+                    <option value="">Choose...</option>
+                </select>
+                <span asp-validation-for="Store.Category" class="text-danger validation-error"></span>
+            </div>
+            <div class="col-12 form-group">
+                <label class="form-label">Description</label>
+                <textarea asp-for="Store.Description" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="col-md-8 form-group">
+                <label class="form-label">Address</label>
+                <input asp-for="Store.Address" class="form-control" placeholder="Hamra Street, Beirut" />
+                <span asp-validation-for="Store.Address" class="text-danger validation-error"></span>
+            </div>
+            <div class="col-md-4 form-group">
+                <label class="form-label">Phone</label>
+                <input asp-for="Store.Phone" class="form-control" />
+            </div>
+            <div class="col-md-3 form-group">
+                <label class="form-label">Opens at</label>
+                <input asp-for="Store.OpensAt" type="time" class="form-control" />
+                <span asp-validation-for="Store.OpensAt" class="text-danger validation-error"></span>
+            </div>
+            <div class="col-md-3 form-group">
+                <label class="form-label">Closes at</label>
+                <input asp-for="Store.ClosesAt" type="time" class="form-control" />
+                <span asp-validation-for="Store.ClosesAt" class="text-danger validation-error"></span>
+            </div>
+            <div class="col-md-3 form-group">
+                <label class="form-label">Delivery fee ($)</label>
+                <input asp-for="Store.DeliveryFee" type="number" step="0.25" min="0" class="form-control" />
+                <span asp-validation-for="Store.DeliveryFee" class="text-danger validation-error"></span>
+            </div>
+            <div class="col-md-3 form-group">
+                <label class="form-label">Minimum order ($)</label>
+                <input asp-for="Store.MinimumOrder" type="number" step="0.5" min="0" class="form-control" />
+                <span asp-validation-for="Store.MinimumOrder" class="text-danger validation-error"></span>
+            </div>
+            <div class="col-md-6 form-group">
+                <label class="form-label">Logo URL (optional)</label>
+                <input asp-for="Store.LogoUrl" class="form-control" placeholder="https://..." />
+            </div>
+            <div class="col-md-3 form-group">
+                <label class="form-label">Latitude</label>
+                <input asp-for="Store.Latitude" class="form-control" id="lat" />
+            </div>
+            <div class="col-md-3 form-group">
+                <label class="form-label">Longitude</label>
+                <input asp-for="Store.Longitude" class="form-control" id="lng" />
+            </div>
+            <div class="col-12">
+                <button type="button" class="btn-tp-secondary" onclick="useMyLocation()"><i class="bi bi-crosshair"></i> I'm at the store: use my location</button>
+                <div class="text-muted" style="font-size:13px">Same open and close time = open 24 hours. Closing after midnight (e.g. 18:00–02:00) works too.</div>
+            </div>
+        </div>
+        <button type="submit" class="btn-tp-primary mt-3"><i class="bi bi-check-lg"></i> @(isNew ? "Create store" : "Save")</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function useMyLocation() {
+            if (!navigator.geolocation) return;
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                document.getElementById('lat').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('lng').value = pos.coords.longitude.toFixed(6);
+            });
+        }
+    </script>
+}

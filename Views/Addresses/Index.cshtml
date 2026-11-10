@@ -1,0 +1,123 @@
+@model AddressesPageViewModel
+@{
+    ViewData["Title"] = "Addresses";
+}
+
+<div class="page-header">
+    <div>
+        <h2>Delivery addresses</h2>
+        <p>Where your orders are delivered</p>
+    </div>
+    <a asp-controller="Cart" asp-action="Index" class="btn-tp-secondary"><i class="bi bi-cart3"></i> Back to cart</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        @if (!Model.Addresses.Any())
+        {
+            <div class="tp-card">
+                <div class="empty-state"><i class="bi bi-geo-alt" style="font-size:40px;display:block;margin-bottom:12px"></i><p>No saved addresses yet.</p></div>
+            </div>
+        }
+        @foreach (var address in Model.Addresses)
+        {
+            <div class="tp-card mb-2">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div style="font-weight:600">
+                            @address.Label
+                            @if (address.IsDefault)
+                            {
+                                <span class="badge-tp success">Default</span>
+                            }
+                        </div>
+                        <div class="text-muted" style="font-size:14px">@address.FullText</div>
+                        @if (!string.IsNullOrEmpty(address.Notes))
+                        {
+                            <div style="font-size:13px"><i class="bi bi-chat-left-text"></i> @address.Notes</div>
+                        }
+                    </div>
+                    <div class="d-flex gap-1">
+                        @if (!address.IsDefault)
+                        {
+                            <form asp-action="SetDefault" asp-route-id="@address.Id" method="post">
+                                <button type="submit" class="btn-tp-secondary" title="Make default"><i class="bi bi-star"></i></button>
+                            </form>
+                        }
+                        <form asp-action="Delete" asp-route-id="@address.Id" method="post">
+                            <button type="submit" class="btn-tp-danger" title="Delete" onclick="return confirm('Delete this address?')"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-6">
+        <div class="tp-card">
+            <div class="tp-card-header"><div class="tp-card-title">Add an address</div></div>
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="row g-2">
+                    <div class="col-md-6 form-group">
+                        <label class="form-label">Label</label>
+                        <input asp-for="NewAddress.Label" class="form-control" placeholder="Home, Work..." />
+                        <span asp-validation-for="NewAddress.Label" class="text-danger validation-error"></span>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label class="form-label">City</label>
+                        <input asp-for="NewAddress.City" class="form-control" placeholder="Beirut" />
+                        <span asp-validation-for="NewAddress.City" class="text-danger validation-error"></span>
+                    </div>
+                    <div class="col-12 form-group">
+                        <label class="form-label">Street</label>
+                        <input asp-for="NewAddress.Street" class="form-control" placeholder="Bliss Street" />
+                        <span asp-validation-for="NewAddress.Street" class="text-danger validation-error"></span>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label class="form-label">Building</label>
+                        <input asp-for="NewAddress.Building" class="form-control" />
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label class="form-label">Floor</label>
+                        <input asp-for="NewAddress.Floor" class="form-control" />
+                    </div>
+                    <div class="col-12 form-group">
+                        <label class="form-label">Notes for the driver</label>
+                        <input asp-for="NewAddress.Notes" class="form-control" placeholder="e.g. ring twice, blue door" />
+                    </div>
+                    <input type="hidden" asp-for="NewAddress.Latitude" id="lat" />
+                    <input type="hidden" asp-for="NewAddress.Longitude" id="lng" />
+                    <div class="col-12">
+                        <button type="button" class="btn-tp-secondary" onclick="useMyLocation()"><i class="bi bi-crosshair"></i> Use my location</button>
+                        <span id="locationStatus" class="text-muted" style="font-size:13px"></span>
+                    </div>
+                    <div class="col-12 form-check mt-2">
+                        <input asp-for="NewAddress.IsDefault" class="form-check-input" />
+                        <label asp-for="NewAddress.IsDefault" class="form-check-label">Make this my default address</label>
+                    </div>
+                </div>
+                <button type="submit" class="btn-tp-primary mt-3"><i class="bi bi-plus-lg"></i> Save address</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Optional map pin: the browser asks permission, then fills the hidden fields.
+        function useMyLocation() {
+            var status = document.getElementById('locationStatus');
+            if (!navigator.geolocation) { status.textContent = 'Location is not supported by this browser.'; return; }
+            status.textContent = 'Getting your location...';
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                document.getElementById('lat').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('lng').value = pos.coords.longitude.toFixed(6);
+                status.textContent = 'Location added ✔';
+            }, function () {
+                status.textContent = 'Could not get your location.';
+            });
+        }
+    </script>
+}

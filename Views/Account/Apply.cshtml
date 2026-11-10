@@ -1,0 +1,89 @@
+@model ApplyPageViewModel
+@{
+    ViewData["Title"] = "Sell or Deliver";
+}
+
+<div class="page-header">
+    <div>
+        <h2>Sell or deliver with CedarDelivery</h2>
+        <p>Open your store on the platform, or earn money delivering orders.</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="tp-card">
+            <div class="tp-card-header"><div class="tp-card-title">Apply</div></div>
+            <form asp-action="Apply" method="post">
+                <div class="form-group mb-3">
+                    <label class="form-label">I want to become a</label>
+                    <select asp-for="Request.RequestedRole" class="form-select" id="roleSelect" onchange="toggleVehicle()">
+                        <option value="">Choose...</option>
+                        <option value="@RequestedRole.Merchant">Merchant (I own a store)</option>
+                        <option value="@RequestedRole.Driver">Driver (I deliver orders)</option>
+                    </select>
+                    <span asp-validation-for="Request.RequestedRole" class="text-danger validation-error"></span>
+                </div>
+
+                <div id="vehicleFields" class="row g-2 mb-3" style="display:none">
+                    <div class="col-md-6">
+                        <label class="form-label">Vehicle</label>
+                        <select asp-for="Request.VehicleType" class="form-select" asp-items="Html.GetEnumSelectList<VehicleType>()"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Plate number</label>
+                        <input asp-for="Request.PlateNumber" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Tell us about yourself</label>
+                    <textarea asp-for="Request.Details" class="form-control" rows="4" placeholder="Store name and what you sell, or your delivery experience and area"></textarea>
+                    <span asp-validation-for="Request.Details" class="text-danger validation-error"></span>
+                </div>
+
+                <button type="submit" class="btn-tp-primary"><i class="bi bi-send-fill"></i> Send application</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="tp-card">
+            <div class="tp-card-header"><div class="tp-card-title">My applications</div></div>
+            @if (!Model.Applications.Any())
+            {
+                <p class="text-muted mb-0">No applications yet.</p>
+            }
+            @foreach (var application in Model.Applications)
+            {
+                <div class="py-2" style="border-top:1px solid var(--border)">
+                    <div class="d-flex justify-content-between">
+                        <strong>@application.RequestedRole</strong>
+                        <span class="badge-tp @Ui.BadgeClass(application.Status)">@application.Status</span>
+                    </div>
+                    <div class="text-muted" style="font-size:13px">Sent @application.CreatedAt.ToString("dd MMM yyyy")</div>
+                    @if (!string.IsNullOrEmpty(application.ReviewNote))
+                    {
+                        <div style="font-size:13px"><i class="bi bi-chat-left-text"></i> @application.ReviewNote</div>
+                    }
+                    @if (application.Status == ApplicationStatus.Approved)
+                    {
+                        <div style="font-size:13px" class="text-muted">Sign out and back in to open your @application.RequestedRole tools.</div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Vehicle fields only matter for drivers.
+        function toggleVehicle() {
+            var isDriver = document.getElementById('roleSelect').value === '@RequestedRole.Driver';
+            document.getElementById('vehicleFields').style.display = isDriver ? '' : 'none';
+        }
+        toggleVehicle();
+    </script>
+}

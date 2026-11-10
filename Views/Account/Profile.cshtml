@@ -1,0 +1,51 @@
+@model ProfileRequest
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="page-header">
+    <div>
+        <h2>My profile</h2>
+        <p>@ViewBag.Email</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="tp-card">
+            <form asp-action="Profile" method="post">
+                <div class="row g-2">
+                    <div class="col-md-6 form-group">
+                        <label asp-for="FirstName" class="form-label"></label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" class="text-danger validation-error"></span>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName" class="text-danger validation-error"></span>
+                    </div>
+                    <div class="col-12 form-group">
+                        <label asp-for="PhoneNumber" class="form-label"></label>
+                        <input asp-for="PhoneNumber" class="form-control" placeholder="+961 70 123 456" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger validation-error"></span>
+                        <div class="text-muted" style="font-size:13px">Drivers and stores use it if they can't find your address.</div>
+                    </div>
+                </div>
+                <button type="submit" class="btn-tp-primary mt-3"><i class="bi bi-check-lg"></i> Save</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="tp-card">
+            <div class="tp-card-header"><div class="tp-card-title">Security</div></div>
+            <p class="text-muted">Change your password or email from the account settings.</p>
+            <a asp-area="Identity" asp-page="/Account/Manage/Index" class="btn-tp-secondary"><i class="bi bi-shield-lock"></i> Account settings</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

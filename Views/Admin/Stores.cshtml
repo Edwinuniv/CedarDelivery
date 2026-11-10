@@ -1,0 +1,44 @@
+@model List<StoreDto>
+@{
+    ViewData["Title"] = "Store Approvals";
+    ViewBag.PageClass = "page-admin";
+}
+
+<div class="page-header">
+    <div>
+        <h2>Store approvals</h2>
+        <p>@Model.Count store(s) waiting. To suspend a live store, open its page and use "Suspend".</p>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="tp-card"><div class="empty-state"><i class="bi bi-patch-check" style="font-size:40px;display:block;margin-bottom:12px"></i><p>Nothing to approve.</p></div></div>
+}
+else
+{
+    <div class="tp-card" style="overflow-x:auto">
+        <table class="tp-table">
+            <thead><tr><th>Store</th><th>Category</th><th>Address</th><th>Hours</th><th>Fee / min</th><th>Created</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var store in Model)
+                {
+                    <tr>
+                        <td><a asp-controller="Stores" asp-action="Details" asp-route-id="@store.Id">@store.Name</a></td>
+                        <td>@store.Category</td>
+                        <td>@store.Address</td>
+                        <td>@Ui.Hours(store.OpensAt, store.ClosesAt)</td>
+                        <td>@Ui.Money(store.DeliveryFee) / @Ui.Money(store.MinimumOrder)</td>
+                        <td class="text-muted">@store.CreatedAt.ToString("dd MMM")</td>
+                        <td>
+                            <form asp-action="SetStoreApproval" asp-route-id="@store.Id" method="post">
+                                <input type="hidden" name="isApproved" value="true" />
+                                <button type="submit" class="btn-tp-primary"><i class="bi bi-check-lg"></i> Approve</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

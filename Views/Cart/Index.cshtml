@@ -1,0 +1,124 @@
+@model CartPageViewModel
+@{
+    ViewData["Title"] = "My Cart";
+    var cart = Model.Cart;
+}
+
+<div class="page-header">
+    <div>
+        <h2>My cart</h2>
+        <p>@(cart.StoreName == null ? "Nothing here yet" : $"From {cart.StoreName}")</p>
+    </div>
+    @if (cart.StoreId.HasValue)
+    {
+        <a asp-controller="Stores" asp-action="Details" asp-route-id="@cart.StoreId" class="btn-tp-secondary"><i class="bi bi-plus-lg"></i> Add more</a>
+    }
+</div>
+
+@if (!cart.Items.Any())
+{
+    <div class="tp-card">
+        <div class="empty-state">
+            <i class="bi bi-cart3" style="font-size:40px;display:block;margin-bottom:12px"></i>
+            <p>Your cart is empty.</p>
+            <a asp-controller="Stores" asp-action="Index" class="btn-tp-primary mt-2"><i class="bi bi-shop"></i> Browse stores</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="tp-card">
+                <table class="tp-table">
+                    <thead>
+                        <tr><th>Item</th><th>Quantity</th><th>Total</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in cart.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div style="font-weight:600">@item.ProductName</div>
+                                    <div class="text-muted" style="font-size:13px">@Ui.Money(item.UnitPrice) each</div>
+                                    @if (!item.IsAvailable)
+                                    {
+                                        <span class="badge-tp danger">Unavailable</span>
+                                    }
+                                </td>
+                                <td>
+                                    <form asp-action="Update" asp-route-id="@item.Id" method="post" class="d-flex gap-1">
+                                        <input type="number" name="quantity" value="@item.Quantity" min="0" max="50" class="form-control" style="width:80px" />
+                                        <button type="submit" class="btn-tp-secondary" title="Update"><i class="bi bi-arrow-repeat"></i></button>
+                                    </form>
+                                </td>
+                                <td style="font-weight:600">@Ui.Money(item.LineTotal)</td>
+                                <td>
+                                    <form asp-action="Remove" asp-route-id="@item.Id" method="post">
+                                        <button type="submit" class="btn-tp-danger" title="Remove"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <form asp-action="Clear" method="post" class="mt-2">
+                    <button type="submit" class="btn-tp-secondary" onclick="return confirm('Empty your cart?')"><i class="bi bi-x-lg"></i> Empty cart</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="tp-card">
+                <div class="tp-card-header"><div class="tp-card-title">Checkout</div></div>
+
+                <div class="d-flex justify-content-between"><span>Subtotal</span><span>@Ui.Money(cart.Subtotal)</span></div>
+                <div class="d-flex justify-content-between"><span>Delivery fee</span><span>@Ui.Money(cart.DeliveryFee)</span></div>
+                <div class="d-flex justify-content-between mt-2 mb-3" style="font-size:18px;font-weight:700"><span>Total</span><span>@Ui.Money(cart.Total)</span></div>
+
+                @foreach (var warning in cart.Warnings)
+                {
+                    <div class="alert-tp error mb-2"><i class="bi bi-exclamation-triangle-fill"></i> @warning</div>
+                }
+
+                @if (!Model.Addresses.Any())
+                {
+                    <div class="alert-tp error mb-2"><i class="bi bi-geo-alt"></i> Add a delivery address first.</div>
+                    <a asp-controller="Addresses" asp-action="Index" class="btn-tp-primary w-100"><i class="bi bi-plus-lg"></i> Add an address</a>
+                }
+                else
+                {
+                    <form asp-action="Checkout" method="post">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Deliver to</label>
+                            <select asp-for="Checkout.AddressId" class="form-select">
+                                @foreach (var address in Model.Addresses)
+                                {
+                                    <option value="@address.Id">@address.Label — @address.FullText</option>
+                                }
+                            </select>
+                            <a asp-controller="Addresses" asp-action="Index" style="font-size:13px">Manage addresses</a>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Payment</label>
+                            <select asp-for="Checkout.PaymentMethod" class="form-select">
+                                <option value="@PaymentMethod.CashOnDelivery">Cash on delivery</option>
+                                <option value="@PaymentMethod.Card" disabled>Card (coming soon)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Note for the store (optional)</label>
+                            <textarea asp-for="Checkout.Notes" class="form-control" rows="2" placeholder="e.g. no onions"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-tp-primary w-100" disabled="@(!cart.CanCheckout)">
+                            <i class="bi bi-bag-check-fill"></i> Place order · @Ui.Money(cart.Total)
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+}

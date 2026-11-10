@@ -1667,7 +1667,7 @@ html.dark-mode .sidebar {
     }
 
         .page-header h2::before {
-            content: '🇱🇧';
+            content: '🌲'; /* was the Lebanese flag, which Windows shows as the letters "LB" */
             font-size: 22px;
             opacity: 0.85;
         }

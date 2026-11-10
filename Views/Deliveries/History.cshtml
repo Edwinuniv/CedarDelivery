@@ -1,0 +1,39 @@
+@model PagedResult<DeliveryDto>
+@{
+    ViewData["Title"] = "Delivery History";
+    var earnings = (EarningsDto)ViewBag.Earnings;
+}
+
+<div class="page-header">
+    <div>
+        <h2>Delivery history</h2>
+        <p>@earnings.CompletedDeliveries delivered · @Ui.Money(earnings.AllTime) earned in total</p>
+    </div>
+    <a asp-action="Index" class="btn-tp-secondary"><i class="bi bi-arrow-left"></i> Deliveries</a>
+</div>
+
+@if (!Model.Items.Any())
+{
+    <div class="tp-card"><div class="empty-state"><i class="bi bi-clock-history" style="font-size:40px;display:block;margin-bottom:12px"></i><p>No deliveries yet.</p></div></div>
+}
+else
+{
+    <div class="tp-card" style="overflow-x:auto">
+        <table class="tp-table">
+            <thead><tr><th>Order</th><th>From → To</th><th>Status</th><th>Earned</th><th>Date</th></tr></thead>
+            <tbody>
+                @foreach (var d in Model.Items)
+                {
+                    <tr>
+                        <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@d.OrderId" style="font-family:monospace">@d.OrderNumber</a></td>
+                        <td>@d.StoreName → @d.DeliveryAddress</td>
+                        <td><span class="badge-tp @Ui.BadgeClass(d.Status)">@Ui.Words(d.Status)</span></td>
+                        <td>@(d.Status == DeliveryStatus.Delivered ? Ui.Money(d.DriverEarning) : "–")</td>
+                        <td class="text-muted">@((d.DeliveredAt ?? d.AssignedAt).ToString("dd MMM HH:mm"))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <partial name="_Pager" model="(Model.Page, Model.TotalPages)" />
+}
