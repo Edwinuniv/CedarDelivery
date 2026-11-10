@@ -4,6 +4,7 @@
     var order = Model.Order;
     ViewData["Title"] = $"Order {order.OrderNumber}";
     ViewBag.OrderId = order.Id; // follow this order live
+    var hasMap = order.StoreLatitude.HasValue || order.DeliveryLatitude.HasValue || order.Driver?.Latitude != null;
 }
 
 <div class="page-header">
@@ -143,6 +144,45 @@
                 <p class="text-muted mb-0"><i class="bi bi-hourglass-split"></i> No driver yet.</p>
             }
         </div>
+
+        @if (hasMap)
+        {
+            <div class="tp-card mb-3">
+                <div class="tp-card-header"><div class="tp-card-title"><i class="bi bi-map"></i> Map</div></div>
+                <div id="orderMap" style="height:260px;border-radius:12px"></div>
+                <div class="text-muted mt-1" style="font-size:12px">
+                    <span style="color:#12a87a">&#9679;</span> Store
+                    <span style="color:#0099CC">&#9679;</span> Delivery
+                    <span style="color:#f97316">&#9679;</span> Driver
+                </div>
+            </div>
+        }
     </div>
 </div>
 
+@section Scripts {
+    @if (hasMap)
+    {
+        <partial name="_MapScripts" />
+        <script>
+            // Store (green), delivery point (blue) and the driver (orange), who moves live
+            // while the order is on its way (SignalR event from the layout).
+            var orderMap = cdShowPoints('orderMap', [
+                { lat: @Json.Serialize(order.StoreLatitude), lng: @Json.Serialize(order.StoreLongitude), kind: 'store', label: @Json.Serialize(order.StoreName) },
+                { lat: @Json.Serialize(order.DeliveryLatitude), lng: @Json.Serialize(order.DeliveryLongitude), kind: 'home', label: 'Delivery address' }
+            ]);
+
+            var driverMarker = null;
+            function moveDriver(lat, lng) {
+                if (lat == null || lng == null) return;
+                if (driverMarker) { driverMarker.setLatLng([lat, lng]); }
+                else { driverMarker = cdMarker(orderMap, lat, lng, 'driver', 'Driver'); }
+            }
+
+            moveDriver(@Json.Serialize(order.Driver?.Latitude), @Json.Serialize(order.Driver?.Longitude));
+            document.addEventListener('cd:driverLocation', function (e) {
+                moveDriver(e.detail.latitude, e.detail.longitude);
+            });
+        </script>
+    }
+}

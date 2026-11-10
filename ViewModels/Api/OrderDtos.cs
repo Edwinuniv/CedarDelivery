@@ -44,6 +44,8 @@ namespace CedarDelivery.ViewModels.Api
         public string? StorePhone { get; set; }
         // Lets the page know if the viewer is the customer or the store owner.
         public string StoreOwnerId { get; set; } = "";
+        public decimal? StoreLatitude { get; set; }
+        public decimal? StoreLongitude { get; set; }
 
         public string CustomerId { get; set; } = "";
         public string CustomerName { get; set; } = "";
@@ -78,6 +80,8 @@ namespace CedarDelivery.ViewModels.Api
             StoreAddress = order.Store.Address,
             StorePhone = order.Store.Phone,
             StoreOwnerId = order.Store.OwnerId,
+            StoreLatitude = order.Store.Latitude,
+            StoreLongitude = order.Store.Longitude,
             CustomerId = order.CustomerId,
             CustomerName = $"{order.Customer.FirstName} {order.Customer.LastName}",
             CustomerPhone = order.Customer.PhoneNumber,
@@ -96,7 +100,9 @@ namespace CedarDelivery.ViewModels.Api
                 Name = $"{order.Delivery.DriverProfile.User.FirstName} {order.Delivery.DriverProfile.User.LastName}",
                 Phone = order.Delivery.DriverProfile.User.PhoneNumber,
                 VehicleType = order.Delivery.DriverProfile.VehicleType,
-                PlateNumber = order.Delivery.DriverProfile.PlateNumber
+                PlateNumber = order.Delivery.DriverProfile.PlateNumber,
+                Latitude = order.Delivery.DriverProfile.CurrentLatitude,
+                Longitude = order.Delivery.DriverProfile.CurrentLongitude
             },
             Timeline = order.StatusHistory
                 .OrderBy(h => h.ChangedAt)
@@ -138,6 +144,9 @@ namespace CedarDelivery.ViewModels.Api
         public string? Phone { get; set; }
         public VehicleType VehicleType { get; set; }
         public string? PlateNumber { get; set; }
+        // Last known position, for the map on the order page.
+        public decimal? Latitude { get; set; }
+        public decimal? Longitude { get; set; }
     }
 
     // Checkout: the cart becomes an order.

@@ -74,6 +74,7 @@
                 <input asp-for="Store.Longitude" class="form-control" id="lng" />
             </div>
             <div class="col-12">
+                <div id="storeMap" style="height:240px;border-radius:12px" class="mb-2"></div>
                 <button type="button" class="btn-tp-secondary" onclick="useMyLocation()"><i class="bi bi-crosshair"></i> I'm at the store: use my location</button>
                 <div class="text-muted" style="font-size:13px">Same open and close time = open 24 hours. Closing after midnight (e.g. 18:00–02:00) works too.</div>
             </div>
@@ -84,12 +85,15 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_MapScripts" />
     <script>
+        // Clicking the map fills the Latitude/Longitude fields.
+        var picker = cdLocationPicker('storeMap', 'lat', 'lng');
+
         function useMyLocation() {
             if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition(function (pos) {
-                document.getElementById('lat').value = pos.coords.latitude.toFixed(6);
-                document.getElementById('lng').value = pos.coords.longitude.toFixed(6);
+                picker.setPin(pos.coords.latitude, pos.coords.longitude);
             });
         }
     </script>

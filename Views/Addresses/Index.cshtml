@@ -89,8 +89,10 @@
                     <input type="hidden" asp-for="NewAddress.Latitude" id="lat" />
                     <input type="hidden" asp-for="NewAddress.Longitude" id="lng" />
                     <div class="col-12">
-                        <button type="button" class="btn-tp-secondary" onclick="useMyLocation()"><i class="bi bi-crosshair"></i> Use my location</button>
-                        <span id="locationStatus" class="text-muted" style="font-size:13px"></span>
+                        <label class="form-label">Pin on the map (optional, helps the driver)</label>
+                        <div id="addressMap" style="height:220px;border-radius:12px"></div>
+                        <button type="button" class="btn-tp-secondary mt-2" onclick="useMyLocation()"><i class="bi bi-crosshair"></i> Use my location</button>
+                        <span id="locationStatus" class="text-muted" style="font-size:13px">or click the map</span>
                     </div>
                     <div class="col-12 form-check mt-2">
                         <input asp-for="NewAddress.IsDefault" class="form-check-input" />
@@ -105,15 +107,18 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_MapScripts" />
     <script>
-        // Optional map pin: the browser asks permission, then fills the hidden fields.
+        // Clicking the map fills the hidden Latitude/Longitude fields.
+        var picker = cdLocationPicker('addressMap', 'lat', 'lng');
+
+        // Or let the browser find the location (it asks permission first).
         function useMyLocation() {
             var status = document.getElementById('locationStatus');
             if (!navigator.geolocation) { status.textContent = 'Location is not supported by this browser.'; return; }
             status.textContent = 'Getting your location...';
             navigator.geolocation.getCurrentPosition(function (pos) {
-                document.getElementById('lat').value = pos.coords.latitude.toFixed(6);
-                document.getElementById('lng').value = pos.coords.longitude.toFixed(6);
+                picker.setPin(pos.coords.latitude, pos.coords.longitude);
                 status.textContent = 'Location added ✔';
             }, function () {
                 status.textContent = 'Could not get your location.';

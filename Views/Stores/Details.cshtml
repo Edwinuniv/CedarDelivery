@@ -106,6 +106,10 @@
             {
                 <p class="mb-0"><i class="bi bi-telephone"></i> @store.Phone</p>
             }
+            @if (store.Latitude.HasValue && store.Longitude.HasValue)
+            {
+                <div id="storeMap" class="mt-2" style="height:180px;border-radius:12px"></div>
+            }
         </div>
 
         @if (Model.Reviews != null)
@@ -134,3 +138,13 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    @if (store.Latitude.HasValue && store.Longitude.HasValue)
+    {
+        <partial name="_MapScripts" />
+        <script>
+            cdShowPoints('storeMap', [{ lat: @Json.Serialize(store.Latitude), lng: @Json.Serialize(store.Longitude), kind: 'store', label: @Json.Serialize(store.Name) }]);
+        </script>
+    }
+}
