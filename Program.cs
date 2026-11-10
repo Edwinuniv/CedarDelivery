@@ -5,6 +5,13 @@ using CedarDelivery.Data;
 using CedarDelivery.Models;
 using CedarDelivery.Repositories.Implementations;
 using CedarDelivery.Repositories.Interfaces;
+using CedarDelivery.Services.Implementations;
+using CedarDelivery.Services.Interfaces;
+using CedarDelivery.ViewModels.Api;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +62,13 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromDays(14);
     options.SlidingExpiration = true;
+
+    // Web pages redirect to the login page, but an API client (JavaScript, Postman)
+    // needs a status code it can read: 401 = not logged in, 403 = wrong role.
+    options.Events.OnRedirectToLogin = context =>
+        ApiAwareRedirect(context, StatusCodes.Status401Unauthorized, "You must be logged in.");
+    options.Events.OnRedirectToAccessDenied = context =>
+        ApiAwareRedirect(context, StatusCodes.Status403Forbidden, "You don't have permission to do this.");
 });
 
 // Role-based policies, used as [Authorize(Policy = "AdminOnly")] on controllers.
@@ -65,13 +79,39 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("DriverOrAdmin", policy => policy.RequireRole(Roles.Driver, Roles.Admin));
 });
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    // Enums travel as text in JSON ("Restaurant" instead of 0), easier to read and to send.
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
+    // Invalid API input (e.g. missing Name) returns our ApiError format instead of the default one.
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(entry => entry.Value!.Errors.Count > 0)
+                .SelectMany(entry => entry.Value!.Errors.Select(error =>
+                    string.IsNullOrEmpty(entry.Key) ? error.ErrorMessage : $"{entry.Key}: {error.ErrorMessage}"))
+                .ToList();
+
+            return new BadRequestObjectResult(new ApiError("Some fields are invalid.", errors));
+        };
+    });
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
+builder.Services.AddHttpContextAccessor();
 
 // Repositories
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IStoreRepository, StoreRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();
+
+// Services
+builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddScoped<IStoreService, StoreService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 // Swagger (API docs at /swagger in development)
 builder.Services.AddEndpointsApiExplorer();
@@ -122,3 +162,17 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.Run();
+
+// Used by the cookie events above: /api requests get a JSON error with the status code;
+// normal pages keep the usual redirect to the login or access-denied page.
+static Task ApiAwareRedirect(RedirectContext<CookieAuthenticationOptions> context, int statusCode, string message)
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Response.StatusCode = statusCode;
+        return context.Response.WriteAsJsonAsync(new ApiError(message));
+    }
+
+    context.Response.Redirect(context.RedirectUri);
+    return Task.CompletedTask;
+}
