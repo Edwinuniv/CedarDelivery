@@ -1,0 +1,7 @@
+# Store text files with LF in the repository; Git converts to the OS default on checkout.
+* text=auto
+
+# Never touch binary files.
+*.png binary
+*.jpg binary
+*.ico binary

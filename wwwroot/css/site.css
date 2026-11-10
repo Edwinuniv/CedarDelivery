@@ -34,3 +34,13 @@ body {
 .text-muted {
   color: var(--text-2) !important;
 }
+
+/* Category tiles on the home page are links: keep their icons in the brand color, not link blue. */
+.home-feature-card .home-feature-icon i {
+  color: var(--teal);
+}
+
+/* The Merchant/Driver theme has a dark sidebar: the dark brand text would disappear on it. */
+body.agent-theme .sidebar .brand-name {
+  color: #ffffff;
+}

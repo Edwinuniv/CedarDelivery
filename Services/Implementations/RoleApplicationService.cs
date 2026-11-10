@@ -139,7 +139,14 @@ namespace CedarDelivery.Services.Implementations
             {
                 if (!await _userManager.IsInRoleAsync(application.User, roleName))
                 {
-                    await _userManager.AddToRoleAsync(application.User, roleName);
+                    var roleResult = await _userManager.AddToRoleAsync(application.User, roleName);
+                    if (!roleResult.Succeeded)
+                    {
+                        // Stop before saving "Approved": the application must not say approved
+                        // if the user didn't actually get the role.
+                        throw new BadRequestException("Could not grant the role: " +
+                            string.Join(" ", roleResult.Errors.Select(e => e.Description)));
+                    }
                 }
 
                 if (application.RequestedRole == RequestedRole.Driver)
