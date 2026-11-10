@@ -12,6 +12,9 @@ namespace CedarDelivery.Repositories.Interfaces
         // Admin view; both filters optional.
         Task<(List<Order> Items, int TotalCount)> GetAllPagedAsync(OrderStatus? status, int? storeId, int page, int pageSize);
 
+        // Orders that are ReadyForPickup and have no driver yet, oldest first.
+        Task<(List<Order> Items, int TotalCount)> GetAwaitingDriverPagedAsync(int page, int pageSize);
+
         Task<bool> OrderNumberExistsAsync(string orderNumber);
 
         // Saves the new order and empties the cart in ONE SaveChanges,

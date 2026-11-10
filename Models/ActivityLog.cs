@@ -20,7 +20,9 @@ namespace CedarDelivery.Models
         ProductChanged,
         ReviewPosted,
         ApplicationSubmitted,
-        ApplicationReviewed
+        ApplicationReviewed,
+        // New values go at the end: the database stores the number, not the name.
+        DeliveryReleased
     }
 
     // A record of something a user did, for security and auditing (same as CedarPay).

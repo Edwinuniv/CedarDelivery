@@ -12,6 +12,7 @@ namespace CedarDelivery.Services.Implementations
         private readonly ICartItemRepository _cartItemRepository;
         private readonly IAddressRepository _addressRepository;
         private readonly IStoreRepository _storeRepository;
+        private readonly IDriverProfileRepository _driverProfileRepository;
         private readonly INotificationService _notifications;
         private readonly IActivityLogService _activityLog;
 
@@ -20,6 +21,7 @@ namespace CedarDelivery.Services.Implementations
             ICartItemRepository cartItemRepository,
             IAddressRepository addressRepository,
             IStoreRepository storeRepository,
+            IDriverProfileRepository driverProfileRepository,
             INotificationService notifications,
             IActivityLogService activityLog)
         {
@@ -27,6 +29,7 @@ namespace CedarDelivery.Services.Implementations
             _cartItemRepository = cartItemRepository;
             _addressRepository = addressRepository;
             _storeRepository = storeRepository;
+            _driverProfileRepository = driverProfileRepository;
             _notifications = notifications;
             _activityLog = activityLog;
         }
@@ -223,6 +226,20 @@ namespace CedarDelivery.Services.Implementations
                 OrderStatusRules.CustomerMessage(status, order.Store.Name),
                 NotificationType.OrderStatusChanged,
                 OrderUrl(order.Id));
+
+            // Food is ready: let every online driver know there is a job.
+            if (status == OrderStatus.ReadyForPickup)
+            {
+                foreach (var driver in await _driverProfileRepository.GetOnlineApprovedAsync())
+                {
+                    await _notifications.NotifyAsync(driver.UserId,
+                        "New delivery available",
+                        $"{order.Store.Name} → {order.DeliveryAddress}. Earn ${order.DeliveryFee:0.00}.",
+                        NotificationType.DeliveryAvailable,
+                        "/Deliveries");
+                }
+            }
+
             await _activityLog.LogAsync(userId, ActivityType.OrderStatusChanged, $"Order {order.OrderNumber} -> {status}.");
 
             return OrderDetailsDto.FromEntity(order);

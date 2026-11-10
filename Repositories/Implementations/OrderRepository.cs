@@ -52,6 +52,25 @@ namespace CedarDelivery.Repositories.Implementations
             return await PageAsync(query, page, pageSize);
         }
 
+        public async Task<(List<Order> Items, int TotalCount)> GetAwaitingDriverPagedAsync(int page, int pageSize)
+        {
+            var query = _context.Orders.Where(o => o.Status == OrderStatus.ReadyForPickup && o.Delivery == null);
+            var totalCount = await query.CountAsync();
+
+            // Oldest first: food that has waited longest gets picked up first.
+            var items = await query
+                .Include(o => o.Store)
+                .Include(o => o.Items)
+                .Include(o => o.StatusHistory)
+                .OrderBy(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .AsSplitQuery()
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
         public async Task<bool> OrderNumberExistsAsync(string orderNumber)
         {
             return await _context.Orders.AnyAsync(o => o.OrderNumber == orderNumber);

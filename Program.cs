@@ -111,6 +111,9 @@ builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 builder.Services.AddScoped<ICartItemRepository, CartItemRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IRoleApplicationRepository, RoleApplicationRepository>();
+builder.Services.AddScoped<IDriverProfileRepository, DriverProfileRepository>();
+builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
 
 // Services
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
@@ -120,6 +123,8 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IRoleApplicationService, RoleApplicationService>();
+builder.Services.AddScoped<IDeliveryService, DeliveryService>();
 
 // Swagger (API docs at /swagger in development)
 builder.Services.AddEndpointsApiExplorer();
