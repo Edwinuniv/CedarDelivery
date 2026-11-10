@@ -11,5 +11,11 @@ namespace CedarDelivery.Repositories.Interfaces
         Task<IEnumerable<User>> GetAllAsync();
         Task UpdateAsync(User user);
         Task<bool> ExistsAsync(string id);
+
+        // Admin user list: search by name or email, optional role filter, newest first.
+        Task<(List<User> Items, int TotalCount)> GetPagedAsync(string? search, string? role, int page, int pageSize);
+
+        // Role names for many users in one query (userId -> roles).
+        Task<Dictionary<string, List<string>>> GetRolesForUsersAsync(IEnumerable<string> userIds);
     }
 }

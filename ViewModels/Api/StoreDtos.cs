@@ -24,6 +24,9 @@ namespace CedarDelivery.ViewModels.Api
         public bool IsApproved { get; set; }
         // Open switch + opening hours, checked right now.
         public bool IsAcceptingOrders { get; set; }
+        // Filled by StoreService from the reviews (null = no reviews yet).
+        public double? AverageRating { get; set; }
+        public int ReviewCount { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public static StoreDto FromEntity(Store store) => new StoreDto

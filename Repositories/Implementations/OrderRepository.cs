@@ -16,6 +16,7 @@ namespace CedarDelivery.Repositories.Implementations
                 .Include(o => o.Customer)
                 .Include(o => o.Items)
                 .Include(o => o.StatusHistory)
+                .Include(o => o.Reviews)
                 .Include(o => o.Delivery)
                     .ThenInclude(d => d!.DriverProfile)
                         .ThenInclude(p => p.User)

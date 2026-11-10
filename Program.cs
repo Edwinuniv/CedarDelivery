@@ -55,6 +55,12 @@ if (!string.IsNullOrEmpty(googleClientId) && !googleClientId.StartsWith("YOUR_")
         });
 }
 
+// Every 5 minutes the login cookie is checked against the user's security stamp.
+// Approving a role or deactivating a user changes the stamp, so it takes effect within 5 minutes
+// (the default is 30).
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+    options.ValidationInterval = TimeSpan.FromMinutes(5));
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Identity/Account/Login";
@@ -114,6 +120,9 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IRoleApplicationRepository, RoleApplicationRepository>();
 builder.Services.AddScoped<IDriverProfileRepository, DriverProfileRepository>();
 builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
+builder.Services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 
 // Services
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
@@ -125,6 +134,8 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IRoleApplicationService, RoleApplicationService>();
 builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 // Swagger (API docs at /swagger in development)
 builder.Services.AddEndpointsApiExplorer();

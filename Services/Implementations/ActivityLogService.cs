@@ -1,16 +1,17 @@
 using CedarDelivery.Models;
 using CedarDelivery.Repositories.Interfaces;
 using CedarDelivery.Services.Interfaces;
+using CedarDelivery.ViewModels.Api;
 
 namespace CedarDelivery.Services.Implementations
 {
     public class ActivityLogService : IActivityLogService
     {
-        private readonly IGenericRepository<ActivityLog> _activityLogRepository;
+        private readonly IActivityLogRepository _activityLogRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<ActivityLogService> _logger;
 
-        public ActivityLogService(IGenericRepository<ActivityLog> activityLogRepository, IHttpContextAccessor httpContextAccessor, ILogger<ActivityLogService> logger)
+        public ActivityLogService(IActivityLogRepository activityLogRepository, IHttpContextAccessor httpContextAccessor, ILogger<ActivityLogService> logger)
         {
             _activityLogRepository = activityLogRepository;
             _httpContextAccessor = httpContextAccessor;
@@ -41,6 +42,29 @@ namespace CedarDelivery.Services.Implementations
             {
                 _logger.LogWarning(ex, "Could not save activity log {Action} for user {UserId}.", action, userId);
             }
+        }
+
+        public async Task<PagedResult<ActivityLogDto>> GetMineAsync(string userId, PageQuery query)
+        {
+            var (items, totalCount) = await _activityLogRepository.GetPagedAsync(userId, null, query.Page, query.PageSize);
+            return ToPaged(items, totalCount, query);
+        }
+
+        public async Task<PagedResult<ActivityLogDto>> GetAllAsync(ActivityQuery query)
+        {
+            var (items, totalCount) = await _activityLogRepository.GetPagedAsync(query.UserId, query.Action, query.Page, query.PageSize);
+            return ToPaged(items, totalCount, query);
+        }
+
+        private static PagedResult<ActivityLogDto> ToPaged(List<ActivityLog> items, int totalCount, PageQuery query)
+        {
+            return new PagedResult<ActivityLogDto>
+            {
+                Items = items.Select(ActivityLogDto.FromEntity).ToList(),
+                Page = query.Page,
+                PageSize = query.PageSize,
+                TotalCount = totalCount
+            };
         }
 
         // Cut text to the column's max length so the insert never fails.

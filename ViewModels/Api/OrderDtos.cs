@@ -60,6 +60,8 @@ namespace CedarDelivery.ViewModels.Api
 
         public DriverInfoDto? Driver { get; set; }
         public List<OrderStatusHistoryDto> Timeline { get; set; } = new List<OrderStatusHistoryDto>();
+        // What the customer already rated (Store, Driver), so the page hides those buttons.
+        public List<ReviewTarget> ReviewedTargets { get; set; } = new List<ReviewTarget>();
         public DateTime CreatedAt { get; set; }
 
         // Needs Store, Customer, Items, StatusHistory and Delivery.DriverProfile.User loaded.
@@ -95,6 +97,7 @@ namespace CedarDelivery.ViewModels.Api
                 .OrderBy(h => h.ChangedAt)
                 .Select(h => new OrderStatusHistoryDto { Status = h.Status, ChangedAt = h.ChangedAt, Note = h.Note })
                 .ToList(),
+            ReviewedTargets = order.Reviews.Select(r => r.TargetType).ToList(),
             CreatedAt = order.CreatedAt
         };
     }

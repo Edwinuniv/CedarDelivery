@@ -8,11 +8,13 @@ namespace CedarDelivery.Services.Implementations
     public class StoreService : IStoreService
     {
         private readonly IStoreRepository _storeRepository;
+        private readonly IReviewRepository _reviewRepository;
         private readonly IActivityLogService _activityLog;
 
-        public StoreService(IStoreRepository storeRepository, IActivityLogService activityLog)
+        public StoreService(IStoreRepository storeRepository, IReviewRepository reviewRepository, IActivityLogService activityLog)
         {
             _storeRepository = storeRepository;
+            _reviewRepository = reviewRepository;
             _activityLog = activityLog;
         }
 
@@ -23,7 +25,7 @@ namespace CedarDelivery.Services.Implementations
 
             return new PagedResult<StoreDto>
             {
-                Items = stores.Select(StoreDto.FromEntity).ToList(),
+                Items = await WithRatingsAsync(stores.Select(StoreDto.FromEntity).ToList()),
                 Page = query.Page,
                 PageSize = query.PageSize,
                 TotalCount = totalCount
@@ -39,7 +41,7 @@ namespace CedarDelivery.Services.Implementations
                 throw new NotFoundException("Store not found.");
             }
 
-            return StoreDto.FromEntity(store);
+            return (await WithRatingsAsync(new List<StoreDto> { StoreDto.FromEntity(store) }))[0];
         }
 
         public async Task<MenuDto> GetMenuAsync(int id, string? userId, bool isAdmin)
@@ -70,7 +72,7 @@ namespace CedarDelivery.Services.Implementations
 
             return new MenuDto
             {
-                Store = StoreDto.FromEntity(store),
+                Store = (await WithRatingsAsync(new List<StoreDto> { StoreDto.FromEntity(store) }))[0],
                 Categories = categories
             };
         }
@@ -78,7 +80,7 @@ namespace CedarDelivery.Services.Implementations
         public async Task<List<StoreDto>> GetMyStoresAsync(string userId)
         {
             var stores = await _storeRepository.GetByOwnerAsync(userId);
-            return stores.Select(StoreDto.FromEntity).ToList();
+            return await WithRatingsAsync(stores.Select(StoreDto.FromEntity).ToList());
         }
 
         public async Task<StoreDto> CreateStoreAsync(string userId, StoreRequest request)
@@ -154,6 +156,23 @@ namespace CedarDelivery.Services.Implementations
         }
 
         // ---------- Helpers ----------
+
+        // Adds average rating and review count, using one query for all the stores.
+        private async Task<List<StoreDto>> WithRatingsAsync(List<StoreDto> stores)
+        {
+            var ratings = await _reviewRepository.GetStoreRatingsAsync(stores.Select(s => s.Id));
+
+            foreach (var store in stores)
+            {
+                if (ratings.TryGetValue(store.Id, out var rating))
+                {
+                    store.AverageRating = rating.Average;
+                    store.ReviewCount = rating.Count;
+                }
+            }
+
+            return stores;
+        }
 
         // Approved stores are public. Unapproved ones are visible only to their owner and admins.
         private static bool CanView(Store store, string? userId, bool isAdmin)
