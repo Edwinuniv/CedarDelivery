@@ -44,6 +44,26 @@ namespace CedarDelivery.Models
         public bool IsApproved { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        // True when the store is approved, switched on by the merchant, and within opening hours.
+        // Handles stores open past midnight (e.g. 18:00 to 02:00). Same open and close time = open all day.
+        public bool IsAcceptingOrders(DateTime now)
+        {
+            if (!IsApproved || !IsOpen)
+            {
+                return false;
+            }
+
+            if (OpensAt == ClosesAt)
+            {
+                return true;
+            }
+
+            var time = TimeOnly.FromDateTime(now);
+            return OpensAt < ClosesAt
+                ? time >= OpensAt && time < ClosesAt
+                : time >= OpensAt || time < ClosesAt;
+        }
+
         public ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
         public ICollection<Product> Products { get; set; } = new List<Product>();
         public ICollection<Order> Orders { get; set; } = new List<Order>();

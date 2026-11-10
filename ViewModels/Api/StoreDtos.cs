@@ -22,6 +22,8 @@ namespace CedarDelivery.ViewModels.Api
         public decimal MinimumOrder { get; set; }
         public bool IsOpen { get; set; }
         public bool IsApproved { get; set; }
+        // Open switch + opening hours, checked right now.
+        public bool IsAcceptingOrders { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public static StoreDto FromEntity(Store store) => new StoreDto
@@ -41,6 +43,7 @@ namespace CedarDelivery.ViewModels.Api
             MinimumOrder = store.MinimumOrder,
             IsOpen = store.IsOpen,
             IsApproved = store.IsApproved,
+            IsAcceptingOrders = store.IsAcceptingOrders(DateTime.Now),
             CreatedAt = store.CreatedAt
         };
     }

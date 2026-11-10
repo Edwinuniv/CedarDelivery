@@ -9,5 +9,8 @@ namespace CedarDelivery.Repositories.Interfaces
         Task UpdateAsync(T entity);
         Task DeleteAsync(int id);
         Task<bool> ExistsAsync(int id);
+        // Saves changes made to entities that were loaded through this repository.
+        // EF tracks loaded entities, so after editing them only a save is needed.
+        Task SaveAsync();
     }
 }

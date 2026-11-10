@@ -53,5 +53,10 @@ namespace CedarDelivery.Repositories.Implementations
         {
             return await GetByIdAsync(id) != null;
         }
+
+        public async Task SaveAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }
